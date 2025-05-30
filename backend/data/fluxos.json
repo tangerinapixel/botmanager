@@ -1,0 +1,47 @@
+{
+  "flows": [
+    {
+      "id": "2",
+      "trigger": "horario",
+      "response": "Estamos disponíveis das 8h às 18h."
+    },
+    {
+      "id": "1744734188285",
+      "trigger": "lição",
+      "response": "*Olá ✅​, é muito bom ter você por aqui*\n\nVamos enviar a lição da escola batina no seu E-mail toda a semana\nEnquanto isso acesso nosso site\n👉​ https://virtualteologico.com.br/escola-sabatina/\n\nEstamos a sua inteira disposição, para dúvidas\n\nGraça e paz 🫶​🫶​\n"
+    },
+    {
+      "id": "1744738940122",
+      "trigger": "Boa tarde",
+      "response": "Boa tarde, em que posso ser útil?"
+    },
+    {
+      "id": "1744755220085",
+      "trigger": "tudo bem",
+      "response": [
+        "Sim estou e vc?"
+      ]
+    },
+    {
+      "id": "1744806749941",
+      "trigger": "Obrigado",
+      "response": [
+        "Nos que agradecemos.😃​😉​\n\n​✅​ Estamos a sua disposiçao para outras duvidas"
+      ]
+    },
+    {
+      "id": "1744851262136",
+      "trigger": "Moo",
+      "response": [
+        "pm2 restart chatbot-backend"
+      ]
+    },
+    {
+      "id": "1744853321411",
+      "trigger": "Boa noite",
+      "response": [
+        "*Seja bem-vindo ao nosso universo teológico!* ​🙏​​🙏​​\n\n✅​ *Queremos proporcionar a você uma experiência única de estudo.* \n\n✔️​Não hesite em interagir comentar curtir e compartilhar nosso conteúdo. Espalhe a Palavra de Deus e ajude a disseminar o conhecimento verdadeiro sobre Jesus. Juntos vamos construir um espaço vibrante e inspirador para o crescimento espiritual e intelectual. \n\nAgora é so me dizer: o que você precisa? ​❓​😀​"
+      ]
+    }
+  ]
+}

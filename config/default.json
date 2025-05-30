@@ -1,0 +1,23 @@
+{
+    "whatsapp": {
+      "sessionPath": "./sessions",
+      "headless": true
+    },
+    "messages": {
+      "greeting": "Olá {name}! Bem-vindo ao atendimento virtual. Escolha uma opção:\n1. Lição\n2. Artigos\n3. Assinatura\n4. Falar com humano",
+      "options": {
+        "1": "📖 Lição disponível em:",
+        "2": "📚 Nossos artigos:",
+        "3": "✍️ Confirme sua assinatura no e-mail recebido.",
+        "4": "🔹 Um atendente será contactado."
+      },
+      "invalidOption": "❌ Opção inválida. Digite 1, 2, 3 ou 4."
+    },
+    "links": {
+      "lesson": "https://exemplo.com/licao.pdf",
+      "articles": [
+        "https://exemplo.com/artigo1",
+        "https://exemplo.com/artigo2"
+      ]
+    }
+  }
