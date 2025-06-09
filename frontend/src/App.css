@@ -1,53 +1,71 @@
 body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
   font-family: Arial, sans-serif;
   background-color: #f5f5f5;
-  padding: 20px;
-  display: flex; /* Ativa Flexbox */
-  justify-content: center; /* Centraliza horizontalmente */
-  align-items: center; /* Centraliza verticalmente */
-  min-height: 100vh; /* Garante altura mínima igual à tela */
-  margin: 0; /* Remove margens padrão */
-  background-color: #f5f5f5; /* Cor de fundo para contraste */
-  }
-  
-  .container {
-    max-width: 800px;
-    background: #fff;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px #ccc;
+  min-height: 100vh;
+}
+
+.main-flex {
+  display: flex;
+  flex-direction: row; 
+  gap: 16px;
+  padding: 16px;
+  align-items: flex-start;}
+
+.greeting-box {
+  flex: 1 1 300px;
+  min-width: 300px;
+  max-width: 400px;
+  width: 100%;
+  border: 0px solid hwb(203 66% 24%);
+  padding: 10px;
+  border-radius: 4px;
+  padding-top: 20px;
+  height: 554px;
+  background: white;
+
+}
+
+/* Responsivo para telas grandes: layout lado a lado */
+@media screen and (min-width: 1024px) {
+  .greeting-box {
+    flex: 0 0 320px;
   }
 
-.container {
-  max-width: 800px;
-  margin: auto;
-  background: #fff;
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px #ccc;
-  justify-content: center;
+}
 
+/* FORMULÁRIO DE ADIÇÃO DE FLUXO */
+.flow-form-wrapper {
+  max-width: 600px;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.card input,
+.card textarea {
+  width: 100%;
+  font-size: 16px;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
 }
 
 .card {
-  margin-bottom: 20px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 15px;
-  padding-left: 15px;
-  padding-right: 55px;
-  width: 730px;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
 }
 
-input, textarea {
-  width: 100%;
-  margin-bottom: 10px;
-  padding: 10px;
-  font-size: 14px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-}
 
+/* Botão salvar fluxo */
 .btn {
   padding: 10px 20px;
   font-size: 16px;
@@ -66,22 +84,280 @@ input, textarea {
   background-color: #007bff;
 }
 
+/* Imagem do QR Code */
 .qr-area img {
-  width: 300px;
-  margin-top: 10px;
-}
-html {
-  overflow-y: scroll; /* Garante que a barra de rolagem esteja sempre presente */
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  overflow-x: hidden; /* Evita o deslocamento horizontal inesperado */
-}
-.qr-area img {
-  max-width: 300px; /* Ajuste o tamanho da imagem */
+  max-width: 300px;
   margin: 20px auto;
   display: block;
+}
+
+/* Responsividade geral */
+@media screen and (max-width: 768px) {
+  .main-flex {
+    flex-direction: column;
+    padding: 10px;
+  }
+
+  .greeting-box,
+  .flow-box {
+    max-width: 100%;
+  }
+
+  .card {
+    max-width: 100%;
+  }
+
+  .card input,
+  .card textarea {
+    width: 100%;
+    font-size: 16px;
+  }
+
+  .btn.blue {
+    display: block;
+    margin-left: 0;
+    margin-top: 10px;
+  }
+}
+.dialog-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.dialog-box {
+  background: #fff;
+  padding: 25px;
+  border-radius: 10px;
+  width: 300px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn.gray {
+  background-color: #aaa;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn.red {
+  background-color: #d9534f;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-action {
+  background-color: transparent;
+  color: #1976d2; /* azul do botão EDITAR */
+  border: none;
+  padding:8px 8px 8px 8px; /* espaçamento interno do icon */
+  border-radius: 60px;
+  font-weight: 500; /* tamanho do icone */
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  margin-right: 0px; /* espaçamento horizontal */
+}
+
+.btn-action:hover {
+  background-color: rgba(25, 118, 210, 0.1); /* leve fundo circular */
+  color: #1565c0; /* azul um pouco mais forte no hover */
+}
+
+.flows-grid .MuiButton-root,
+.flows-grid .btn-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 22px; width: 22px;
+  left: 3px; bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #4CAF50;
+}
+
+input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+.box-tempo-expiracao {
+  background-color: #f0f4ff;
+  border-left: 0px solid #3675be;
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  flex-wrap: wrap;
+}
+.box-tempo-expiracao .icon {
+  font-size: 24px;
+  color: #4a90e2;
+}
+.box-tempo-expiracao .tempo-label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+.box-tempo-expiracao .tempo-input {
+  padding: 5px;
+  width: 60px;
+  margin-right: 10px;
+  border: 1px solid #4a90e2;
+  border-radius: 5px;
+  
+}
+.box-tempo-expiracao .tempo-btn {
+  padding: 6px 12px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* BulkSenderModal.css */
+
+.bulk-modal {
+  width: 90vw;
+  max-width: 1200px;
+  height: 90vh;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem;
+  overflow: hidden;
+}
+
+.bulk-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow: hidden;
+}
+
+.bulk-contact-list {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  border-radius: 8px;
+  background: #f9f9f9;
+}
+
+.bulk-message-area textarea {
+  width: 100%;
+  height: 150px;
+  resize: vertical;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.bulk-progress {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.bulk-upload-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  border: 1px dashed #aaa;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  background: #fff;
+}
+
+.bulk-upload-preview img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 6px;
+}
+
+.bulk-footer-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  
+  background-color: #f4f6f8; 
+  min-height: 100vh; /* OPCIONAL: Garante que o fundo cinza preencha a tela se o conteúdo for muito curto, mas o footer ainda seguirá o conteúdo */
+}
+
+.main-column {
+  border: 1px solid #e0e0e0; 
+  border-radius: 8px;        
+  background-color: #ffffff; 
+  padding: 16px;             
+  display: flex;
+  flex-direction: column;
+}
+
+greeting-box, .flow-box, .flow-boxe {
+  /* Estilos comuns para as colunas */
+  flex: 1; /* Faz com que tentem ocupar o espaço horizontal disponível */
+  min-width: 300px; /* Garante uma largura mínima */
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #ffffff;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  /* REMOVA QUALQUER 'height' FIXA DAQUI */
 }

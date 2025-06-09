@@ -1,0 +1,8 @@
+{
+  "greetings": [
+    {
+      "id": "1746710098312",
+      "message": "Olá {{nome}}, fico muito feliz que você chegou aqui! 😊🙏\n\nQueremos dar a você a devida atenção ❤️\ne para facilitar nossa comunicação, siga estas 2 etapas rápidas:\n\n✅ Salve nosso contato para receber as próximas novidades.\n✅ Escolha uma opção abaixo respondendo com o NÚMERO correspondente:\n\n1️⃣ - [1] 📖 Baixar Lição da Escola Sabatina (PDF)\n2️⃣ - [2] 📚 Saber mais sobre estudos teológicos\n3️⃣ - [3] ✍️ Confirmar minha assinatura\n4️⃣ - [4] 🗣️ Falar sobre outro assunto\n\nExemplo: envie \"1\" para baixar a lição"
+    }
+  ]
+}
