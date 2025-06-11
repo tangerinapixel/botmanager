@@ -1,3 +1,2 @@
-2025/06/09-11:45:20.787 4ba8 Reusing MANIFEST C:\Users\rteol\whatsapp-bot - Copia\backend\.wwebjs_auth\session\Default\Sync Data\LevelDB/MANIFEST-000001
-2025/06/09-11:45:20.794 4ba8 Recovering log #3
-2025/06/09-11:45:20.795 4ba8 Reusing old log C:\Users\rteol\whatsapp-bot - Copia\backend\.wwebjs_auth\session\Default\Sync Data\LevelDB/000003.log 
+2025/06/11-19:01:22.287 4160 Creating DB C:\Users\rteol\whatsapp-bot - Copia\backend\.wwebjs_auth\session\Default\Sync Data\LevelDB since it was missing.
+2025/06/11-19:01:22.301 4160 Reusing MANIFEST C:\Users\rteol\whatsapp-bot - Copia\backend\.wwebjs_auth\session\Default\Sync Data\LevelDB/MANIFEST-000001

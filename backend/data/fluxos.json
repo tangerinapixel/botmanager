@@ -22,7 +22,7 @@
       "id": "1745260436790",
       "trigger": "2",
       "response": [
-        "🌟 *Seja bem-vindo ao nosso universo teológico!*\n\n*Queremos proporcionar a você uma experiência única de estudo!* 📖.\n\n✨ Não hesite em interagir,comentar,curtir e compartilhar nosso conteúdo. 💬❤️↗️ \n\n📢 *Espalhe a Palavra de Deus* e ajude a disseminar o conhecimento verdadeiro sobre Jesus! 🙌✝️. Juntos vamos construir um espaço vibrante e inspirador para o *crescimento espiritual e intelectual*. 🌱 🎉\n\n🚀 *ACESSE* 👉https://virtualteologico.com.br/ \n\n#CompartilheABênção #JesusÉaResposta\n\n⌨️​​ Digite *MENU* para ver novamente as opções.//***"
+        "🌟 *Seja bem-vindo ao nosso universo teológico!* *****\n\n*Queremos proporcionar a você uma experiência única de estudo!* 📖.\n\n✨ Não hesite em interagir,comentar,curtir e compartilhar nosso conteúdo. 💬❤️↗️ \n\n📢 *Espalhe a Palavra de Deus* e ajude a disseminar o conhecimento verdadeiro sobre Jesus! 🙌✝️. Juntos vamos construir um espaço vibrante e inspirador para o *crescimento espiritual e intelectual*. 🌱 🎉\n\n🚀 *ACESSE* 👉https://virtualteologico.com.br/ \n\n#CompartilheABênção #JesusÉaResposta\n\n⌨️​​ Digite *MENU* para ver novamente as opções.//***"
       ],
       "imageUrl": "/uploads/1749461129692.png",
       "matchType": "equals"
@@ -266,6 +266,15 @@
       "imageUrl": "/uploads/1749463857133.png",
       "matchType": "equals",
       "id": "1749463857139"
+    },
+    {
+      "trigger": "teste",
+      "response": [
+        "//TAG DE ROTORNO: //\n👇 Faça isso:\ngit checkout \"coloque aqui a versão da tag sem as aspas\"\n\nE se quiser continuar o trabalho normal depois (voltar para o presente): \n👇 Faça isso:\ngit checkout main\n\nSe você quer descartar as alterações locais e voltar para o estado limpo do master:\n👇 Faça isso:\ngit reset --hard\ngit checkout master\n\n\n E se quiser continuar o trabalho a partir dessa tag?\n👇 Faça isso:\ngit checkout -b nova-rama-v1.5\n\nvoltar pro presente:\n👇 Faça isso: \ngit checkout main\n\nCHAVE DE API DE LICENÇAS:"
+      ],
+      "imageUrl": "/uploads/1749679834236.png",
+      "matchType": "equals",
+      "id": "1749679834245"
     }
   ]
 }

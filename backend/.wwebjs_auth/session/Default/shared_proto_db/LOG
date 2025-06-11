@@ -1,3 +1,2 @@
-2025/06/09-11:45:20.948 28cc Reusing MANIFEST C:\Users\rteol\whatsapp-bot - Copia\backend\.wwebjs_auth\session\Default\shared_proto_db/MANIFEST-000001
-2025/06/09-11:45:20.949 28cc Recovering log #3
-2025/06/09-11:45:20.951 28cc Reusing old log C:\Users\rteol\whatsapp-bot - Copia\backend\.wwebjs_auth\session\Default\shared_proto_db/000003.log 
+2025/06/11-19:01:22.483 133c Creating DB C:\Users\rteol\whatsapp-bot - Copia\backend\.wwebjs_auth\session\Default\shared_proto_db since it was missing.
+2025/06/11-19:01:22.489 133c Reusing MANIFEST C:\Users\rteol\whatsapp-bot - Copia\backend\.wwebjs_auth\session\Default\shared_proto_db/MANIFEST-000001
