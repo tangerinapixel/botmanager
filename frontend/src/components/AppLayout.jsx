@@ -13,6 +13,7 @@ import ExportarEtiquetasModal from './ExportarEtiquetasModal';
 import ExportarGruposModal from './ExportarGruposModal';
 import BulkSenderModal from './BulkSenderModal';
 import QRCodeDisplay from './QRCodeDisplay';
+import { FADE_OUT_DURATION } from '../hooks/useAppLoading';
 
 const electronAPI = window.electronAPI;
 
@@ -20,7 +21,8 @@ export function AppLayout({ appState }) {
   // A desestruturação das props está correta
   const {
     waClientStatus, handleWhatsAppAction, abrirModalMass, setAbrirModalMass,
-    isLoadingActivation, showActivationModal, isAppActivated, handleActivationSuccess,
+    isLoadingActivation,  loadingMessage,  isFadingOut, showActivationModal, 
+    isAppActivated, handleActivationSuccess,
     qrCodeUrl,
     saudacaoAtiva, // Apenas o valor, o setSaudacaoAtiva é usado em uma função que não está aqui
     setSaudacaoAtiva,
@@ -32,11 +34,25 @@ export function AppLayout({ appState }) {
     respostasAtivas, toggleRespostas, notify
   } = appState;
 
-  if (isLoadingActivation && electronAPI) {
+  if ((isLoadingActivation || isFadingOut) && electronAPI) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        flexDirection: 'column',
+        backgroundColor: '#242424', // <-- 3. GARANTA O FUNDO ESCURO
+        transition: `opacity ${FADE_OUT_DURATION}ms ease-out`, // 4. APLIQUE A TRANSIÇÃO
+        opacity: isFadingOut ? 0 : 1, // 5. CONTROLE A OPACIDADE COM O ESTADO
+      }}>
         <CircularProgress />
-        <Typography sx={{ mt: 2 }}>Verificando ativação da aplicação...</Typography>
+        <Typography sx={{
+          mt: 2,
+          color: 'white', // <-- 6. GARANTA A COR BRANCA DO TEXTO
+        }}>
+          {loadingMessage}
+        </Typography>
       </Box>
     );
   }

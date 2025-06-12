@@ -1,11 +1,29 @@
+// hooks/useAppState.js
 import { useState, useEffect, useCallback } from 'react';
 import { useNotifier } from '../context/Notifier';
 import { useWhatsAppConnection } from './useWhatsAppConnection';
 import { whatsAppActions } from '../services/socket';
+// =======================================================================
+// 1. IMPORTAR O NOSSO HOOK DE CARREGAMENTO
+import { useAppLoading } from './useAppLoading';
+// =======================================================================
 
 const electronAPI = window.electronAPI;
 
 export function useAppState() {
+  // =======================================================================
+  // 2. USAR O HOOK DE CARREGAMENTO E PEGAR SEUS ESTADOS
+  const {
+    isAppActivated,
+    showActivationModal,
+    isLoadingActivation,
+    isFadingOut,
+    loadingMessage,
+    handleActivationSuccess: handleBaseActivationSuccess, // Renomeia para evitar conflito
+  } = useAppLoading();
+  // =======================================================================
+
+  // Estados que pertencem apenas ao AppState (tudo certo aqui)
   const [openExportModal, setOpenExportModal] = useState(false);
   const [openExportGroupsModal, setOpenExportGroupsModal] = useState(false);
   const [respostasAtivas, setRespostasAtivas] = useState(true);
@@ -14,11 +32,7 @@ export function useAppState() {
   const [abrirModalMass, setAbrirModalMass] = useState(false);
   const [saudacaoAtiva, setSaudacaoAtiva] = useState(true);
   const [tempoMinutos, setTempoMinutos] = useState(3);
-  const [isAppActivated, setIsAppActivated] = useState(!electronAPI);
-  const [showActivationModal, setShowActivationModal] = useState(false);
-  const [isLoadingActivation, setIsLoadingActivation] = useState(!!electronAPI);
   const notify = useNotifier();
-  
   const { status: waClientStatus, qrCodeUrl } = useWhatsAppConnection();
 
   const handleAddFlow = useCallback((newFlow) => {
@@ -125,12 +139,12 @@ export function useAppState() {
     }
   };
 
-  const handleActivationSuccess = useCallback(() => {
-    setIsAppActivated(true);
-    setShowActivationModal(false);
+   const handleActivationSuccess = useCallback(() => {
+    handleBaseActivationSuccess(); // Chama a função do useAppLoading para fechar modal, etc.
     notify('🎉 Aplicação ativada com sucesso!', 'success');
-  }, [notify]);
+  }, [notify, handleBaseActivationSuccess]);
 
+  // 5. REMOVIDA A LÓGICA DE ATIVAÇÃO DESTE useEffect, pois ela agora vive no useAppLoading
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
@@ -139,79 +153,63 @@ export function useAppState() {
           fetch('http://localhost:5001/api/fluxos'),
           fetch('http://localhost:5001/api/greetings')
         ]);
-
         if (!configRes.ok || !flowsRes.ok || !greetingsRes.ok) {
           throw new Error('Falha ao carregar dados do servidor.');
         }
-
         const configData = await configRes.json();
         const flowsData = await flowsRes.json();
         const greetingsData = await greetingsRes.json();
-
-       if (configData && typeof configData.tempoExpiracaoMinutos === 'number' && !isNaN(configData.tempoExpiracaoMinutos)) {
-  setTempoMinutos(configData.tempoExpiracaoMinutos);
-} else {
-  // Se o valor vindo do backend for inválido (nulo, indefinido, texto, etc.),
-  // garantimos que o estado seja definido para o valor padrão seguro.
-  setTempoMinutos(3); 
-  console.warn('Valor de tempoExpiracaoMinutos recebido do backend é inválido ou nulo. Usando valor padrão (3).');
-}
+        if (configData && typeof configData.tempoExpiracaoMinutos === 'number' && !isNaN(configData.tempoExpiracaoMinutos)) {
+          setTempoMinutos(configData.tempoExpiracaoMinutos);
+        } else {
+          setTempoMinutos(3); 
+          console.warn('Valor de tempoExpiracaoMinutos recebido do backend é inválido ou nulo. Usando valor padrão (3).');
+        }
         if (flowsData.success) setFlows(flowsData.flows);
         setGreetings(greetingsData);
-
       } catch (error) {
         console.error("Erro ao buscar dados iniciais:", error);
         notify("Não foi possível carregar as configurações do servidor.", "error");
       }
     };
 
-    const listenToActivation = () => {
-      if (!electronAPI) return;
-
-      const handleInitialActivation = (activated) => {
-        setIsAppActivated(activated);
-        setShowActivationModal(!activated);
-        setIsLoadingActivation(false);
-      };
-      
-      electronAPI.send('get-initial-activation-status');
-      const unsubscribe = electronAPI.on('initial-activation-status', handleInitialActivation);
-      return unsubscribe;
-    };
-
     fetchInitialData();
-    const unsubscribeActivation = listenToActivation();
 
-    return () => {
-      if (unsubscribeActivation) unsubscribeActivation();
-    };
-  }, [notify]);
+    // A função listenToActivation() e seu unsubscribe foram removidos daqui.
+    
+  }, [notify]); // O array de dependências agora só tem o notify
 
+  // 6. RETORNAR OS ESTADOS CORRETOS (os do loading e os do app)
   return {
-    openExportModal, setOpenExportModal,
-    openExportGroupsModal, setOpenExportGroupsModal,
-    abrirModalMass, setAbrirModalMass,
+    // Estados do useAppLoading
     isAppActivated,
     showActivationModal,
     isLoadingActivation,
-    handleActivationSuccess,
+    isFadingOut,
+    loadingMessage,
+    // Estados do useAppState
+    openExportModal, setOpenExportModal,
+    openExportGroupsModal, setOpenExportGroupsModal,
+    abrirModalMass, setAbrirModalMass,
     waClientStatus,
     qrCodeUrl,
-    handleWhatsAppAction,
     flows,
-    handleAddFlow,
-    handleDeleteFlow,
-    handleUpdateFlow,
     respostasAtivas, 
-    toggleRespostas,
     greetings,
-    addGreeting,
-    deleteGreeting,
-    editGreeting,
     saudacaoAtiva, 
     setSaudacaoAtiva,
     tempoMinutos, 
     setTempoMinutos,
+    // Funções
+    handleActivationSuccess,
+    handleWhatsAppAction,
+    handleAddFlow,
+    handleDeleteFlow,
+    handleUpdateFlow,
+    toggleRespostas,
+    addGreeting,
+    deleteGreeting,
+    editGreeting,
     atualizarTempo,
     notify
   };

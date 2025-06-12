@@ -1,10 +1,20 @@
 // hooks/useAppLoading.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const electronAPI = window.electronAPI;
-const MIN_LOADING_TIME = 3500;
-const POST_VERIFICATION_MESSAGE_DURATION = 1000;
-export const FADE_OUT_DURATION = 100; // Ex: 0.5 segundos para a transição suave
+
+// =======================================================================
+// NOVAS CONSTANTES DE TEMPO - AQUI VOCÊ TEM O CONTROLE TOTAL
+// =======================================================================
+// Tempo MÍNIMO que o PRIMEIRO texto ("Verificando...") deve ficar na tela.
+const MIN_FIRST_TEXT_TIME = 3000; // Ex: 3 segundos
+
+// Tempo EXATO que o SEGUNDO texto ("Licença Ativa") deve ficar na tela.
+const SECOND_TEXT_DURATION = 1500; // Ex: 1.5 segundos
+
+// Duração da animação de fade.
+export const FADE_OUT_DURATION = 50;
+// =======================================================================
 
 
 export function useAppLoading() {
@@ -14,89 +24,74 @@ export function useAppLoading() {
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Verificando licenças...');
 
-
   useEffect(() => {
     if (!electronAPI) {
       setIsAppActivated(true);
-      setShowActivationModal(false);
       setIsLoadingActivation(false);
-      setIsFadingOut(false);
-      setLoadingMessage('Licença ativa');
       return;
     }
 
-    setIsLoadingActivation(true);
-    setIsFadingOut(false);
+    // Lógica redesenhada para ser sequencial e clara.
+    const runLoadingSequence = async () => {
+      try {
+        // --- ETAPA 1: CONTROLA O TEMPO DO PRIMEIRO TEXTO ---
+        const activationPromise = new Promise((resolve, reject) => {
+          const callback = (status) => {
+            electronAPI.removeListener('initial-activation-status', callback);
+            resolve({ activated: status });
+          };
+          electronAPI.on('initial-activation-status', callback);
+          electronAPI.send('get-initial-activation-status');
+          setTimeout(() => reject(new Error("Timeout")), 10000);
+        });
 
-    const activationCheckPromise = new Promise(resolve => {
-      const electronActivationCallback = (activated) => {
-        electronAPI.removeListener('initial-activation-status', electronActivationCallback);
-        resolve({ activated: activated });
-      };
+        const minTimePromise = new Promise(resolve => setTimeout(resolve, MIN_FIRST_TEXT_TIME));
+        
+        // Espera tanto pela verificação real QUANTO pelo tempo mínimo definido.
+        const [{ activated }] = await Promise.all([activationPromise, minTimePromise]);
 
-      electronAPI.on('initial-activation-status', electronActivationCallback);
-      electronAPI.send('get-initial-activation-status');
-    });
-
-    const minTimePromise = new Promise(resolve => {
-      setTimeout(() => {
-        resolve('min_time_elapsed');
-      }, MIN_LOADING_TIME);
-    });
-
-    Promise.all([activationCheckPromise, minTimePromise])
-      .then(([activationResult]) => {
-        setIsAppActivated(activationResult.activated);
-        setShowActivationModal(!activationResult.activated);
-
-if (activationResult.activated) {
-          setLoadingMessage('Licença ativa');
-
-          setTimeout(() => {
-            setIsFadingOut(true); // Inicia o fade out
-            setTimeout(() => {
-              setIsLoadingActivation(false); // Remove do DOM após fade
-              setIsFadingOut(false);
-            }, FADE_OUT_DURATION);
-          }, POST_VERIFICATION_MESSAGE_DURATION); // Atraso para exibir "Licença ativa"
-          
+        // --- ETAPA 2: MUDA PARA O SEGUNDO TEXTO E CONTROLA SEU TEMPO ---
+        setIsAppActivated(activated);
+        if (activated) {
+          setLoadingMessage('Licença Ativa');
+          // Espera a duração exata definida para o segundo texto.
+          await new Promise(resolve => setTimeout(resolve, SECOND_TEXT_DURATION));
         } else {
-         setLoadingMessage('Erro na verificação!');
-          setIsFadingOut(true);
-          setTimeout(() => {
-            setIsLoadingActivation(false);
-            setIsFadingOut(false);
-          }, FADE_OUT_DURATION);
+          setLoadingMessage('Ativação necessária');
+          setShowActivationModal(true);
+          // Se não estiver ativado, não precisa esperar, já pode iniciar o fade.
         }
-      })
-      .catch(error => {
-        console.error("Erro na verificação de ativação da aplicação:", error);
-        setIsAppActivated(false);
+      } catch (error) {
+        console.error("Falha na verificação de ativação:", error);
+        setLoadingMessage('Erro na verificação');
         setShowActivationModal(true);
-        setIsLoadingActivation(false);
-        setIsFadingOut(false);
-        setLoadingMessage('Erro na verificação!');
-      });
+      }
 
-    return () => {
+      // --- ETAPA 3: INICIA O FADE OUT E FINALIZA ---
+      // Esta parte só roda depois que as etapas 1 e 2 terminarem.
+      setIsFadingOut(true);
+      await new Promise(resolve => setTimeout(resolve, FADE_OUT_DURATION));
+      
+      setIsLoadingActivation(false);
+      setIsFadingOut(false);
     };
+
+    runLoadingSequence();
+
   }, []);
 
-  // Função para ser chamada quando a ativação for bem-sucedida (ex: após o usuário inserir a licença)
-  const handleActivationSuccess = () => {
+  const handleActivationSuccess = useCallback(() => {
     setIsAppActivated(true);
     setShowActivationModal(false);
-    setIsFadingOut(false);
-    setLoadingMessage('Licença ativa');
-  };
+  }, []);
 
   return {
     isAppActivated,
     showActivationModal,
     isLoadingActivation,
-    handleActivationSuccess,
-    setIsAppActivated, // Expor setIsAppActivated caso precise ser alterado de fora (ex: se o backend confirmar a licença)
     isFadingOut,
-    loadingMessage
+    loadingMessage,
+    handleActivationSuccess,
+    setIsAppActivated,
   };
 }
