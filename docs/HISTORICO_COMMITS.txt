@@ -1,0 +1,9 @@
+HISTÓRICO DE COMMITS DO REPOSITÓRIO (Branch: ponto-estavel)
+============================================================
+
+* 2193d49 - (2026-10-25) feat: central de conversas (LiveChat), fila de mensagens, IA conversacional e melhorias de UX [Roni Moreira]
+* b059e8e - (2025-07-12) Novo ponto de partida estável [Roni Moreira]
+* 0987628 - (2025-06-11) logica loader de confirmação de licença atualizada [Roni Moreira]
+* e7148d0 - (2025-06-11) saudação ok/fluxos ok/ envio ok/etiquetas ok/qrcod ok/loadscreen ok [Roni Moreira]
+* 1cac2e8 - (2025-06-09) resolvido janela duplicada de salvar arquivos xlsx [Roni Moreira]
+* ae9fdeb - (2025-05-30) Fluxos funcionando com envio de imagem [Roni Moreira]
