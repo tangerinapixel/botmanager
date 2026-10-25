@@ -8,6 +8,7 @@ const WWebJSPatcher = require('../utils/wwebjsPatcher');
 const DripQueueManager = require('./DripQueueManager');
 const MessageQueueService = require('./MessageQueueService');
 const DiskQueuePersistence = require('./DiskQueuePersistence');
+const lidPhoneStore = require('../utils/lidPhoneStore');
 
 class WhatsAppClientManager {
     constructor(io, handlers, configRefs) {
@@ -723,6 +724,7 @@ class WhatsAppClientManager {
         this.isDisconnecting = true;
         try {
             await this._destroyClient();
+            await lidPhoneStore.saveNow().catch(() => {});
             console.log(`[${timestamp}] [SHUTDOWN] Recursos e processos do WhatsApp liberados com sucesso. Sessão preservada intacta.`);
         } finally {
             this.isDisconnecting = false;
@@ -1005,6 +1007,9 @@ class WhatsAppClientManager {
             // Cobre o caso em que a lib emitiu 'ready' sem executar attachEventListeners (handshake retomado/forçado).
             await this._ensureMessageListeners('ready').catch(() => false);
 
+            // Sincroniza cofre local com o cache de mapeamento do WhatsApp Web
+            lidPhoneStore.syncFromClient(this.client).catch(() => {});
+
             // Inicia o Watchdog de Saúde (PASSO 2 FIX: Timeout de 25s, tolerância a 3 falhas e pausa durante sincronização)
             if (this.watchdogInterval) {
                 clearInterval(this.watchdogInterval);
@@ -1199,6 +1204,19 @@ class WhatsAppClientManager {
 
                     const name = contact.name || contact.pushname || '';
                     label = name ? `${name} ${phoneFormatted}` : phoneFormatted;
+
+                    // Hook para o cofre ultra-leve lidPhoneStore
+                    if (from.endsWith('@lid')) {
+                        let phoneCandidate = (contact.id?.server === 'c.us' ? contact.id.user : null) ||
+                                             (msg._data?.senderPn ? msg._data.senderPn.replace(/\D/g, '') : null) ||
+                                             (contact.number && contact.number.length >= 8 ? contact.number.replace(/\D/g, '') : null);
+                        if (!phoneCandidate && msg.body) {
+                            phoneCandidate = lidPhoneStore.extractPhoneFromText(msg.body);
+                        }
+                        if (phoneCandidate) {
+                            lidPhoneStore.set(from, phoneCandidate, name);
+                        }
+                    }
                 } catch (_) {
                     label = formatPhoneNumber(msg.from);
                 }

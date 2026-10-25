@@ -89,7 +89,7 @@ app.use(express.static(frontendPath));
 
 // Fallback SPA imediato para requisições não-API
 app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+  if (req.path.startsWith('/api') || req.path.startsWith('/uploads') || req.path.startsWith('/exportar-')) {
     return next();
   }
   const indexPath = path.join(frontendPath, 'index.html');

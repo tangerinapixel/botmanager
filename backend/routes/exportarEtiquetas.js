@@ -2,11 +2,12 @@
 const express = require('express');
 const router = express.Router();
 const { ts } = require('../utils/logger');
+const lidPhoneStore = require('../utils/lidPhoneStore');
 
 // VERIFICAÇÃO OK: Aceitando 'handleCriticalClientErrorFunc' como parâmetro.
 module.exports = function (clientManager, handleCriticalClientErrorFunc) {
   
-  router.get('/exportar-etiqueta/:labelId', async (req, res) => {
+  router.get(['/exportar-etiqueta/:labelId', '/api/exportar-etiqueta/:labelId'], async (req, res) => {
     const timestamp = ts();
     const originMessage = `GET /exportar-etiqueta/${req.params.labelId}`;
 
@@ -28,46 +29,126 @@ module.exports = function (clientManager, handleCriticalClientErrorFunc) {
         return res.status(404).json({ success: false, message: 'Etiqueta não encontrada.' });
       }
 
-      console.log(`[${timestamp}] [${originMessage}] Buscando chats para a etiqueta "${label.name}"...`);
-      const chats = await label.getChats();
-      const contatos = [];
+      console.log(`[${timestamp}] [${originMessage}] Buscando contatos em lote para a etiqueta "${label.name}"...`);
 
-      // Processa em lotes para limitar a concorrência e não sobrecarregar o Puppeteer
-      const CONCURRENCY_LIMIT = 25;
-      for (let i = 0; i < chats.length; i += CONCURRENCY_LIMIT) {
-        const batch = chats.slice(i, i + CONCURRENCY_LIMIT);
-        await Promise.all(batch.map(async (chat) => {
-          try {
-            if (!chat || !chat.id) return;
-            const isIndividual = chat.id.server === 'c.us' || chat.id._serialized?.endsWith('@c.us');
-            if (isIndividual && !chat.isGroup) {
-              const numero = chat.id.user.replace(/\D/g, '');
-              let nome = chat.name || '';
-              
-              // Se o nome não estiver no cache do chat ou for igual ao número, busca dados detalhados via getContact() de forma segura
-              if (!nome || nome === numero || nome === chat.id._serialized) {
-                try {
-                  const contato = await chat.getContact();
-                  if (contato.pushname && !contato.pushname.includes(contato.number)) {
-                    nome = contato.pushname;
-                  } else if (contato.name && !contato.name.includes(contato.number)) {
-                    nome = contato.name;
-                  }
-                } catch (contErr) {
-                  // Fallback silencioso (preserva o nome que já temos ou vazio)
-                }
-              }
-              
-              contatos.push({ numero, nome });
-            }
-          } catch (contactErr) {
-            console.warn(`[${timestamp}] [${originMessage}] ⚠️ Erro ao processar um contato (${chat.id?._serialized}):`, contactErr.message);
+      // Resolução em Lote (Batch) de Telefone Real e Nome para @c.us e @lid em uma única avaliação no navegador
+      const localMap = Object.fromEntries(lidPhoneStore.map);
+      const batchResult = await client.pupPage.evaluate(async (targetLabelId, localMap) => {
+        try {
+          const WAWebCollections = window.require ? window.require('WAWebCollections') : null;
+          const WAWebApiContact = window.require ? window.require('WAWebApiContact') : null;
+          const WAWebWidFactory = window.require ? window.require('WAWebWidFactory') : null;
+          const LabelCollection = WAWebCollections?.Label || window.Store?.Label;
+
+          if (!LabelCollection) {
+            return { error: 'LabelCollection não disponível no Store do WhatsApp Web.' };
           }
-        }));
+          const targetLabel = LabelCollection.get(targetLabelId);
+          if (!targetLabel) {
+            return { error: 'Etiqueta não encontrada no Store do WhatsApp Web.' };
+          }
+
+          const items = targetLabel.labelItemCollection ? (targetLabel.labelItemCollection.getModelsArray ? targetLabel.labelItemCollection.getModelsArray() : []) : [];
+          const contactsList = [];
+          const newlyResolved = [];
+          const seenPids = new Set();
+          const seenNumbers = new Set();
+
+          for (const item of items) {
+            if (item.parentType !== 'Chat' || !item.parentId) continue;
+            const pid = typeof item.parentId === 'string' ? item.parentId : item.parentId._serialized;
+            if (!pid || pid.endsWith('@g.us') || seenPids.has(pid)) continue;
+            seenPids.add(pid);
+
+            const chat = WAWebCollections?.Chat ? WAWebCollections.Chat.get(pid) : (window.Store?.Chat ? window.Store.Chat.get(pid) : null);
+            let contact = WAWebCollections?.Contact ? WAWebCollections.Contact.get(pid) : (window.Store?.Contact ? window.Store.Contact.get(pid) : null);
+
+            let rawPhone = '';
+
+            if (pid.endsWith('@lid')) {
+              // 1. Tenta resolver via WAWebApiContact.getPhoneNumber(wid)
+              try {
+                const widObj = WAWebWidFactory ? WAWebWidFactory.createWid(pid) : null;
+                if (widObj && WAWebApiContact && typeof WAWebApiContact.getPhoneNumber === 'function') {
+                  const phoneRes = await WAWebApiContact.getPhoneNumber(widObj);
+                  if (phoneRes) {
+                    if (typeof phoneRes === 'string') rawPhone = phoneRes;
+                    else if (phoneRes.user) rawPhone = phoneRes.user;
+                    else if (phoneRes._serialized) rawPhone = phoneRes._serialized;
+                  }
+                }
+              } catch (e) {}
+
+              // 2. Fallbacks em Contact e Chat
+              if (!rawPhone && contact?.phoneNumber) {
+                rawPhone = typeof contact.phoneNumber === 'string' ? contact.phoneNumber : (contact.phoneNumber.user || '');
+              }
+              if (!rawPhone && chat?.contact?.phoneNumber) {
+                rawPhone = typeof chat.contact.phoneNumber === 'string' ? chat.contact.phoneNumber : (chat.contact.phoneNumber.user || '');
+              }
+
+              // 3. Fallback no cofre local lidPhoneStore
+              if (!rawPhone && localMap && localMap[pid]) {
+                rawPhone = localMap[pid][0] || '';
+              }
+            } else {
+              // @c.us normal
+              const widObj = chat?.id || (WAWebWidFactory ? WAWebWidFactory.createWid(pid) : null);
+              rawPhone = widObj?.user || pid.split('@')[0];
+            }
+
+            const numeroLimpo = (rawPhone || '').replace(/\D/g, '');
+
+            // Se o número de telefone foi resolvido, busca o registro de contato @c.us para enriquecer o nome caso o @lid não possua
+            if (numeroLimpo) {
+              const cUsWid = numeroLimpo + '@c.us';
+              const cUsContact = WAWebCollections?.Contact ? WAWebCollections.Contact.get(cUsWid) : (window.Store?.Contact ? window.Store.Contact.get(cUsWid) : null);
+              if (cUsContact) {
+                if (!contact) contact = cUsContact;
+                else Object.assign(contact, cUsContact);
+              }
+            }
+
+            // Extrair o nome mais completo disponível
+            let nome = (chat?.name || contact?.name || contact?.pushname || contact?.verifiedName || contact?.formattedTitle || contact?.shortName || (localMap && localMap[pid] ? localMap[pid][1] : '') || '').trim();
+
+            // Evitar que o nome seja igual ao LID ou ao número cru ou placeholder genérico
+            if (nome === pid || nome === numeroLimpo || nome === 'Usuário desconhecido') {
+              nome = contact?.pushname || contact?.name || (localMap && localMap[pid] ? localMap[pid][1] : '') || '';
+            }
+
+            // Descarta contatos sem telefone real válido
+            if (numeroLimpo && numeroLimpo.length >= 8 && !seenNumbers.has(numeroLimpo)) {
+              seenNumbers.add(numeroLimpo);
+              contactsList.push({
+                numero: numeroLimpo,
+                nome: nome || ''
+              });
+
+              if (pid.endsWith('@lid') && (!localMap || !localMap[pid])) {
+                newlyResolved.push([pid, numeroLimpo, nome || '']);
+              }
+            }
+          }
+
+          return { contacts: contactsList, newlyResolved };
+        } catch (err) {
+          return { error: err.message };
+        }
+      }, labelId, localMap);
+
+      if (batchResult && batchResult.error) {
+        console.warn(`[${timestamp}] [${originMessage}] ⚠️ Alerta no batch de contatos:`, batchResult.error);
       }
 
+      if (batchResult && Array.isArray(batchResult.newlyResolved) && batchResult.newlyResolved.length > 0) {
+        lidPhoneStore.setBatch(batchResult.newlyResolved);
+      }
+
+      const contatos = (batchResult && Array.isArray(batchResult.contacts)) ? batchResult.contacts : [];
+
       if (contatos.length === 0) {
-        console.log(`[${timestamp}] [${originMessage}] 📭 Nenhum contato encontrado na etiqueta "${label.name}".`);
+        console.log(`[${timestamp}] [${originMessage}] 📭 Nenhum contato com número válido encontrado na etiqueta "${label.name}".`);
         return res.status(200).json({ success: true, message: `Nenhum contato encontrado na etiqueta "${label.name}".`, no_content: true });
       }
 
@@ -92,7 +173,7 @@ module.exports = function (clientManager, handleCriticalClientErrorFunc) {
       // VERIFICAÇÃO OK: Envio do arquivo como resposta.
       await workbook.xlsx.write(res);
       res.end();
-      console.log(`[${timestamp}] [${originMessage}] ✅ Arquivo gerado e enviado: contatos_etiqueta_${safeFileName}.xlsx`);
+      console.log(`[${timestamp}] [${originMessage}] ✅ Arquivo gerado e enviado: contatos_etiqueta_${safeFileName}.xlsx (${contatos.length} contatos)`);
 
     } catch (err) {
       const errorTimestamp = ts();
@@ -105,7 +186,7 @@ module.exports = function (clientManager, handleCriticalClientErrorFunc) {
         }
       }
       
-      // PEQUENA CORREÇÃO: Enviar a resposta de erro apenas se ela ainda não foi enviada.
+      // Enviar a resposta de erro apenas se ela ainda não foi enviada.
       if (!res.headersSent) {
         res.status(500).json({ success: false, message: `Erro ao gerar o arquivo: ${err.message}` });
       }
