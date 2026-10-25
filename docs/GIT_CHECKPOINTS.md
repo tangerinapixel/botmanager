@@ -6,83 +6,83 @@ Este documento contém o registro dos checkpoints, branches e histórico de vers
 
 ## 1. Informações do Checkpoint Atual
 
-* **Hash do Commit:** `2193d49`
-* **Data do Commit:** 25 de Outubro de 2026, 13:01:28 (-03:00)
+* **Hash do Commit:** `f312b2e`
+* **Data do Commit:** 25 de Outubro de 2026, 14:37:03 (-03:00)
 * **Autor:** Roni Moreira <roni@virtualteologico.com.br>
 * **Branch Ativa:** `ponto-estavel`
-* **Mensagem:** `feat: central de conversas (LiveChat), fila de mensagens, IA conversacional e melhorias de UX`
+* **Mensagem:** `fix(livechat): blindagem de edge cases em grupos, remocao de race condition e novo loader dinamico`
 * **Status:** Árvore de trabalho limpa (`working tree clean`), todas as alterações consolidadas.
 
 ---
 
 ## 2. Resumo das Alterações Consolidadas neste Checkpoint
 
-### a) Módulo LiveChat (Central de Conversas)
-1. **Listagem e Segregação de Conversas:**
-   - Visualização por abas: *Todas*, *Privadas* e *Grupos*.
-   - Tratamento de nomes, telefones formatados, avatares e contadores de mensagens não lidas.
-2. **Suporte Robusto a Grupos (`@g.us`):**
-   - Implementado DTO plano em `backend/utils/wwebjsPatcher.js` para `window.WWebJS.getChatModel`.
-   - Eliminados erros CDP `-32000` (referências circulares do MobX) e exceções de IndexedDB (`DataError: Failed to execute 'get' on 'IDBObjectStore'`).
-   - Carregamento de títulos reais de grupos e suporte a participantes.
-3. **Filtro Canônico Anti-Bolhas Fantasmas:**
-   - Blacklist de mensagens de protocolo (`e2e_notification`, `notification_template`, `gp2`, `ciphertext`, etc.) em `backend/services/liveChatService.js` e `frontend/src/hooks/useLiveChat.js`.
-   - Preservação estrita de mensagens com mídia (`hasMedia: true`) mesmo sem legenda.
-4. **Ancoragem Instantânea e Rolagem Inteligente:**
-   - Em `frontend/src/components/LiveChat/ChatMessageArea.jsx`, substituição do `useEffect` de scroll pelo `useLayoutEffect` com medição e ajuste *pre-paint* (`container.scrollTop = container.scrollHeight`).
-   - Eliminação do *smooth scroll* incômodo na troca de conversas: ao entrar em qualquer chat, a tela abre instantaneamente já posicionada na mensagem mais recente.
-   - Rolagem suave reservada exclusivamente para novas mensagens incrementais (quando enviadas pelo operador ou quando o operador já estiver no rodapé).
+### a) Blindagem de Grupos e Comunidades (Edge Cases)
+1. **Exposição de Flags de Comunidade:**
+   - Em `backend/utils/wwebjsPatcher.js`, implementada a exposição segura de `isParentGroup`, `groupType`, `isCommunity` e `isCommunityAnnouncementGroup` nos DTOs de `window.WWebJS.getChatModel` e `window.WWebJS.getChats`.
+   - Na criação de objetos via `ChatFactory.create`, as propriedades são preservadas diretamente na instância do Chat (evitando que o método `_patch` interno da biblioteca descarte os atributos).
+2. **Higienização de Contêineres-Pai e Grupos Órfãos:**
+   - Em `backend/services/liveChatService.js`, descarte estrito de contêineres-pai de comunidade (`isParentGroup === true` ou `groupType === 'COMMUNITY'`), que não são salas de conversas reais.
+   - Descarte de grupos órfãos de chamadas/notificações com nome genérico (`"Grupo"` e `isReadOnly === true`), reduzindo a lista de grupos para apenas os grupos válidos e salas de avisos ativas.
 
-### b) Arquitetura Backend e Fila de Mensagens
-* Criação de serviços modulares em `backend/services/` (`MessageQueueService`, `DiskQueuePersistence`, `DripQueueManager`, `liveChatService`, `whatsappClientManager`, `geminiService`).
-* Persistência de fila em disco e recuperação resiliente após reinicializações.
-* Integração de memória de contexto e IA conversacional (`aiMemoryRepository`, `conversationalAiService`).
+### b) Eliminação de Race Condition no Frontend
+1. **Trava de Concorrência Assíncrona:**
+   - Em `frontend/src/hooks/useLiveChat.js`, implementada referência sincronizada `activeJidRef.current = jid`.
+   - Na troca de conversas (`selectChat`), limpeza atômica imediata das mensagens anteriores (`setMessages([])`) quando o novo contato não está no cache, evitando sobreposição de conteúdo visual.
+   - Na chegada de dados assíncronos (`fetchMessagesForJid`), validação estrita de `if (activeJidRef.current === jid)` antes de aplicar `setMessages`, impedindo que respostas concorrentes sobrescrevam a tela do chat ativo.
+   - Proteção de cache em memória (`messagesCacheByJid`): apenas arrays com mensagens reais (`length > 0`) são armazenados, prevenindo o bloqueio permanente de contatos.
 
-### c) Higiene do Repositório
-* `.gitignore` atualizado para ignorar caches de sessão do Puppeteer/WhatsApp (`backend/sessions/`, `temp_user_data/`), arquivos de build pesados (`dist/`) e logs de execução (`*-stdout.txt`, `*-stderr.txt`).
-* Remoção definitiva de resíduos temporários do índice Git.
+### c) Novo Loader Dinâmico e Feedback Visual de Mensagens
+1. **Spinner com Halo Gradiente e Pulso:**
+   - Em `frontend/src/components/LiveChat/ChatMessageArea.jsx` e `frontend/src/components/LiveChat/LiveChat.css`, substituição do texto estático *"Carregando histórico de mensagens..."* por um loader visual moderno.
+   - Anel externo com halo gradiente neon (`#38bdf8` ➔ `#6366f1`) acelerado por GPU (`@keyframes liveChatSpin`).
+   - Ícone central `MessageSquare` com animação de pulso e brilho (`@keyframes liveChatPulse`).
+   - Rótulo *"Carregando mensagens"* acompanhado de micro-animação de onda nos 3 pontos (`@keyframes liveChatDotWave`).
+   - Transição suave de entrada com *fade-in*.
+2. **Feedback Visual de Estado Vazio:**
+   - Exibição de card limpo e amigável quando `messages.length === 0` (diferenciando grupos de conversas privadas) para que o operador saiba que não há mensagens recentes em vez de ver uma tela em branco.
 
 ---
 
-## 3. Branches Disponíveis no Repositório
+## 3. Histórico de Checkpoints Anteriores
+
+* **`21dfac9`** - (2026-10-25) `docs: registro de checkpoints e histórico do Git para consulta futura`
+* **`2193d49`** - (2026-10-25) `feat: central de conversas (LiveChat), fila de mensagens, IA conversacional e melhorias de UX`
+* **`b059e8e`** - (2025-07-12) `Novo ponto de partida estável`
+* **`0987628`** - (2025-06-11) `logica loader de confirmação de licença atualizada`
+
+---
+
+## 4. Branches Disponíveis no Repositório
 
 | Branch | Descrição |
 | :--- | :--- |
-| `ponto-estavel` *(atual)* | Branch de produção estável contendo todo o LiveChat, correções de UX e fila de mensagens |
+| `ponto-estavel` *(atual)* | Branch de produção estável contendo todo o LiveChat, correções de UX, loader moderno e fila de mensagens |
 | `master` | Linha principal de desenvolvimento anterior |
 | `projeto-restaurado-ok` | Backup anterior de restauração da aplicação |
 
 ---
 
-## 4. Guia Rápido de Comandos Git para Consulta e Restauração
+## 5. Guia Rápido de Comandos Git para Consulta e Restauração
 
 ### Para verificar o status atual:
 ```bash
 git status
 ```
 
-### Para ver o histórico detalhado dos últimos commits:
+### Para ver o log recente resumido:
 ```bash
 git log --oneline -n 10
 ```
 
-### Para inspecionar as alterações deste checkpoint (`2193d49`):
+### Para criar um novo commit de checkpoint:
 ```bash
-git show 2193d49 --stat
+git add .
+git commit -m "tipo(escopo): descrição clara da alteração"
 ```
 
-### Para criar uma nova tag de versão neste ponto:
+### Para restaurar com segurança caso precise voltar ao ponto anterior:
 ```bash
-git tag -a v2.2.0 -m "Versao 2.2.0 com LiveChat e IA"
-```
-
-### Para restaurar a árvore caso alguém faça alterações indesejadas:
-```bash
-# Descarta alterações não salvas e volta exatamente para este commit:
-git reset --hard 2193d49
-```
-
-### Para criar uma nova branch a partir deste checkpoint:
-```bash
-git checkout -b minha-nova-feature 2193d49
+# Volta arquivos do diretório de trabalho mantendo o histórico
+git checkout f312b2e -- .
 ```

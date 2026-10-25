@@ -81,6 +81,7 @@ export function useLiveChat() {
   }, []);
 
   const setActiveJid = useCallback((val) => {
+    activeJidRef.current = val;
     liveChatMemoryCache.activeJid = val;
     setActiveJidState(val);
   }, []);
@@ -89,7 +90,7 @@ export function useLiveChat() {
     setMessagesState(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
       liveChatMemoryCache.messages = next;
-      if (activeJidRef.current) {
+      if (activeJidRef.current && Array.isArray(next) && next.length > 0) {
         liveChatMemoryCache.messagesCacheByJid.set(activeJidRef.current, next);
       }
       return next;
@@ -111,7 +112,7 @@ export function useLiveChat() {
     setIsBackendReadyState(val);
   }, []);
 
-  // Referência mutável para activeJid acessível dentro do listener do Socket sem recriá-lo
+  // Referência mutável para activeJid acessível dentro do listener do Socket e callbacks assíncronos
   const activeJidRef = useRef(activeJid);
   useEffect(() => {
     activeJidRef.current = activeJid;
@@ -153,12 +154,13 @@ export function useLiveChat() {
   }, [notify, setChats, setIsBackendReady]);
 
   /**
-   * Busca o histórico de mensagens do chat selecionado
+   * Busca o histórico de mensagens do chat selecionado com proteção de concorrência
    */
   const fetchMessagesForJid = useCallback(async (jid) => {
     if (!jid) return;
-    const hasCached = liveChatMemoryCache.messagesCacheByJid.has(jid);
-    if (!hasCached) {
+    const cached = liveChatMemoryCache.messagesCacheByJid.get(jid);
+    const hasCached = Array.isArray(cached) && cached.length > 0;
+    if (!hasCached && activeJidRef.current === jid) {
       setIsLoadingMessages(true);
     }
     try {
@@ -168,31 +170,55 @@ export function useLiveChat() {
 
       if (data && data.success && Array.isArray(data.messages)) {
         const cleanMessages = data.messages.filter(isRenderableMessage);
-        setMessages(cleanMessages);
-        liveChatMemoryCache.messagesCacheByJid.set(jid, cleanMessages);
+
+        // Salva no cache apenas se houver mensagens reais (evita travar chats com [] permanente)
+        if (cleanMessages.length > 0) {
+          liveChatMemoryCache.messagesCacheByJid.set(jid, cleanMessages);
+        }
+
+        // Trava de concorrência: só atualiza a tela se o operador ainda estiver com este chat ativo
+        if (activeJidRef.current === jid) {
+          setMessages(cleanMessages);
+        }
 
         // Zera o contador de não lidas localmente para este chat
         setChats(prev => prev.map(c => c.jid === jid ? { ...c, unreadCount: 0 } : c));
       }
     } catch (err) {
       console.warn(`[useLiveChat] Erro ao buscar mensagens de ${jid}:`, err.message);
-      if (notify && !hasCached) notify('Erro ao carregar mensagens deste contato.', 'error');
+      if (notify && !hasCached && activeJidRef.current === jid) {
+        notify('Erro ao carregar mensagens deste contato.', 'error');
+      }
     } finally {
-      setIsLoadingMessages(false);
+      // Trava de concorrência: só encerra o loading se a requisição pertencer ao chat ativo
+      if (activeJidRef.current === jid) {
+        setIsLoadingMessages(false);
+      }
     }
   }, [notify, setMessages, setChats]);
 
   /**
-   * Seleciona uma conversa ativa
+   * Seleciona uma conversa ativa de forma atômica e limpa
    */
   const selectChat = useCallback((jid) => {
+    if (!jid) return;
     if (jid === activeJidRef.current) return;
+
+    // Atualiza imediatamente a ref e o estado para evitar race condition
+    activeJidRef.current = jid;
     setActiveJid(jid);
 
-    // Se já existirem mensagens no cache de RAM para este contato, exibe instantaneamente (0ms)
-    if (liveChatMemoryCache.messagesCacheByJid.has(jid)) {
-      setMessages(liveChatMemoryCache.messagesCacheByJid.get(jid));
+    const cached = liveChatMemoryCache.messagesCacheByJid.get(jid);
+    if (cached && Array.isArray(cached) && cached.length > 0) {
+      setMessages(cached);
+      setIsLoadingMessages(false);
+    } else {
+      // Limpa imediatamente para não exibir mensagens do chat anterior
+      setMessagesState([]);
+      liveChatMemoryCache.messages = [];
+      setIsLoadingMessages(true);
     }
+
     fetchMessagesForJid(jid);
   }, [fetchMessagesForJid, setActiveJid, setMessages]);
 

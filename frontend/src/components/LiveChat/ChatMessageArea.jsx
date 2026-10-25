@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useLayoutEffect } from 'react';
-import { MessageCircle, CheckCheck, Clock, AlertTriangle, Phone, Users, Pencil, Trash2 } from 'lucide-react';
+import { MessageCircle, MessageSquare, CheckCheck, Clock, AlertTriangle, Phone, Users, Pencil, Trash2 } from 'lucide-react';
 import ContactAvatar from './ContactAvatar';
 import { isRenderableMessage } from '../../hooks/useLiveChat';
 
@@ -270,12 +270,53 @@ export default function ChatMessageArea({
       {/* Área de Mensagens com Divisores de Data e Auto-scroll */}
       <div className="live-chat-messages-container" ref={containerRef}>
         {isLoadingMessages ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '30px', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-            Carregando histórico de mensagens...
+          <div className="live-chat-loading-state">
+            <div className="live-chat-loader-wrapper">
+              <div className="live-chat-spinner-ring" />
+              <MessageSquare size={20} className="live-chat-loader-icon" />
+            </div>
+            <span className="live-chat-loading-text">
+              Carregando mensagens
+              <span className="live-chat-loading-dots">
+                <span className="live-chat-dot" />
+                <span className="live-chat-dot" />
+                <span className="live-chat-dot" />
+              </span>
+            </span>
           </div>
         ) : messages.length === 0 ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '40px', color: 'var(--text-muted)', fontSize: '0.82rem', textAlign: 'center' }}>
-            Nenhuma mensagem anterior encontrada para este contato.<br />Envie a primeira mensagem abaixo!
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '48px 24px',
+            color: 'var(--text-muted)',
+            fontSize: '0.84rem',
+            textAlign: 'center',
+            gap: '8px'
+          }}>
+            <div style={{
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              backgroundColor: 'rgba(255, 255, 255, 0.04)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-muted)',
+              marginBottom: '4px'
+            }}>
+              <MessageCircle size={22} style={{ opacity: 0.7 }} />
+            </div>
+            <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
+              {isGroup ? 'Nenhuma mensagem recente neste grupo' : 'Nenhuma mensagem recente nesta conversa'}
+            </span>
+            <span style={{ maxWidth: '320px', lineHeight: 1.4, fontSize: '0.78rem' }}>
+              {isGroup
+                ? 'Este grupo ainda não possui mensagens de texto ou mídias recentes registradas.'
+                : 'Envie uma mensagem abaixo para iniciar o atendimento em tempo real.'}
+            </span>
           </div>
         ) : (
           messages.map((msg, index) => {

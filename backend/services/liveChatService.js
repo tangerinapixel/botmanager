@@ -132,23 +132,62 @@ class LiveChatService {
       }
 
       // Filtra conversas válidas: individuais privadas (@c.us, @lid) e grupos (@g.us)
-      // Ignora estritamente broadcasts, newsletters e canais
+      // Ignora estritamente broadcasts, newsletters, status, contêineres-pai de comunidade e grupos órfãos
       const validChats = rawChats.filter(c => {
         if (!c || !c.id || typeof c.id._serialized !== 'string') return false;
         const jid = c.id._serialized;
-        return !c.isBroadcast &&
-               !jid.endsWith('@broadcast') &&
-               !jid.endsWith('@newsletter') &&
-               jid !== 'status@broadcast' &&
-               jid !== '0@c.us' &&
-               !jid.startsWith('0@');
+
+        // 1. Rejeita broadcasts, newsletters e canais
+        if (c.isBroadcast ||
+            jid.endsWith('@broadcast') ||
+            jid.endsWith('@newsletter') ||
+            jid === 'status@broadcast' ||
+            jid === '0@c.us' ||
+            jid.startsWith('0@')) {
+          return false;
+        }
+
+        const isGroup = Boolean(c.isGroup || jid.endsWith('@g.us'));
+
+        // 2. Descarte de Contêineres-Pai de Comunidade (não são salas de conversas, apenas agrupadores)
+        const isParentGroup = Boolean(
+          c.isParentGroup ||
+          c._data?.isParentGroup ||
+          c.groupMetadata?.isParentGroup ||
+          c.groupType === 'COMMUNITY' ||
+          c.groupMetadata?.groupType === 'COMMUNITY'
+        );
+        if (isGroup && isParentGroup) {
+          return false;
+        }
+
+        // 3. Descarte de registros órfãos de grupos sem nome resolvido e inativos/readOnly (históricos antigos de chamada/gp2)
+        if (isGroup) {
+          const rawName = (c.name || c.formattedTitle || c.contact?.name || c.contact?.pushname || '').trim();
+          const isGenericName = !rawName || isUnknownName(rawName) || rawName.toLowerCase() === 'grupo';
+          const isReadOnly = Boolean(c.isReadOnly);
+          const hasNoLastMessage = !c.lastMessage || (!c.lastMessage.body && !c.lastMessage.type);
+          if (isGenericName && (isReadOnly || hasNoLastMessage)) {
+            return false;
+          }
+        }
+
+        return true;
       });
 
       // Mapeia para um formato limpo, leve e robusto para o frontend
       const mappedChats = validChats.map(c => {
         const jid = c.id._serialized;
         const isGroup = Boolean(c.isGroup || jid.endsWith('@g.us'));
-        const isCommunity = Boolean(c.isParentGroup || c.isCommunity || c.isCommunityAnnouncementGroup || c._data?.isParentGroup);
+        const isCommunity = Boolean(
+          c.isParentGroup ||
+          c.isCommunity ||
+          c.isCommunityAnnouncementGroup ||
+          c._data?.isParentGroup ||
+          c._data?.isCommunity ||
+          c.groupMetadata?.groupType === 'COMMUNITY' ||
+          c.groupMetadata?.groupType === 'LINKED_ANNOUNCEMENT_GROUP'
+        );
         const number = isGroup ? '' : (c.id.user || jid.replace(/@c\.us$/, '').replace(/@lid$/, ''));
         let participantsCount = 0;
         if (isGroup) {

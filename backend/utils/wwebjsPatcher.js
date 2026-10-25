@@ -119,6 +119,11 @@ class WWebJSPatcher {
                                     };
                                 }
 
+                                const isParentGroup = Boolean(chat.isParentGroup || chat._data?.isParentGroup || chat.groupMetadata?.isParentGroup || chat.groupMetadata?.groupType === 'COMMUNITY' || chat.groupType === 'COMMUNITY');
+                                const groupType = String(chat.groupType || chat.groupMetadata?.groupType || '');
+                                const isCommunityAnnouncementGroup = Boolean(chat.isCommunityAnnouncementGroup || chat.groupMetadata?.isCommunityAnnouncementGroup || chat.groupMetadata?.groupType === 'LINKED_ANNOUNCEMENT_GROUP');
+                                const isCommunity = Boolean(chat.isCommunity || chat._data?.isCommunity || isParentGroup || isCommunityAnnouncementGroup);
+
                                 return {
                                     id: {
                                         _serialized: serializedId,
@@ -130,6 +135,10 @@ class WWebJSPatcher {
                                     isGroup: isGroup,
                                     isBroadcast: isBroadcast,
                                     isChannel: isChannel,
+                                    isParentGroup: isParentGroup,
+                                    isCommunity: isCommunity,
+                                    isCommunityAnnouncementGroup: isCommunityAnnouncementGroup,
+                                    groupType: groupType,
                                     isReadOnly: Boolean(chat.isReadOnly || cleanGroupMetadata?.announce),
                                     unreadCount: Number(chat.unreadCount || 0),
                                     timestamp: time,
@@ -146,6 +155,11 @@ class WWebJSPatcher {
                                 console.error('[WWebJS Patch] Erro ao construir DTO plano em getChatModel:', err.message);
                                 const serializedId = chat?.id?._serialized || (typeof chat?.id === 'string' ? chat.id : '');
                                 const isGroup = Boolean((serializedId && serializedId.endsWith('@g.us')) || chat?.id?.server === 'g.us' || chat?.isGroup);
+                                const isParentGroup = Boolean(chat?.isParentGroup || chat?._data?.isParentGroup || chat?.groupMetadata?.isParentGroup || chat?.groupMetadata?.groupType === 'COMMUNITY' || chat?.groupType === 'COMMUNITY');
+                                const groupType = String(chat?.groupType || chat?.groupMetadata?.groupType || '');
+                                const isCommunityAnnouncementGroup = Boolean(chat?.isCommunityAnnouncementGroup || chat?.groupMetadata?.isCommunityAnnouncementGroup || chat?.groupMetadata?.groupType === 'LINKED_ANNOUNCEMENT_GROUP');
+                                const isCommunity = Boolean(chat?.isCommunity || chat?._data?.isCommunity || isParentGroup || isCommunityAnnouncementGroup);
+
                                 return {
                                     id: {
                                         _serialized: serializedId,
@@ -155,6 +169,10 @@ class WWebJSPatcher {
                                     name: chat?.formattedTitle || chat?.name || (isGroup ? 'Grupo' : ''),
                                     formattedTitle: chat?.formattedTitle || chat?.name || (isGroup ? 'Grupo' : ''),
                                     isGroup: isGroup,
+                                    isParentGroup: isParentGroup,
+                                    isCommunity: isCommunity,
+                                    isCommunityAnnouncementGroup: isCommunityAnnouncementGroup,
+                                    groupType: groupType,
                                     isReadOnly: Boolean(chat?.isReadOnly),
                                     unreadCount: Number(chat?.unreadCount || 0),
                                     timestamp: Number(chat?.t || Math.floor(Date.now() / 1000)),
@@ -260,6 +278,11 @@ class WWebJSPatcher {
                                         }
                                     }
 
+                                    const isParentGroup = Boolean(chat.isParentGroup || chat._data?.isParentGroup || chat.groupMetadata?.isParentGroup || chat.groupMetadata?.groupType === 'COMMUNITY' || chat.groupType === 'COMMUNITY');
+                                    const groupType = String(chat.groupType || chat.groupMetadata?.groupType || '');
+                                    const isCommunityAnnouncementGroup = Boolean(chat.isCommunityAnnouncementGroup || chat.groupMetadata?.isCommunityAnnouncementGroup || chat.groupMetadata?.groupType === 'LINKED_ANNOUNCEMENT_GROUP');
+                                    const isCommunity = Boolean(chat.isCommunity || chat._data?.isCommunity || isParentGroup || isCommunityAnnouncementGroup);
+
                                     cleanDTOs.push({
                                         id: {
                                             _serialized: serializedId,
@@ -270,9 +293,10 @@ class WWebJSPatcher {
                                         formattedTitle: title,
                                         isGroup: isGroup,
                                         isBroadcast: isBroadcast,
-                                        isParentGroup: Boolean(chat.isParentGroup || chat._data?.isParentGroup),
-                                        isCommunity: Boolean(chat.isCommunity || chat._data?.isCommunity),
-                                        isCommunityAnnouncementGroup: Boolean(chat.isCommunityAnnouncementGroup || chat._data?.isCommunityAnnouncementGroup),
+                                        isParentGroup: isParentGroup,
+                                        isCommunity: isCommunity,
+                                        isCommunityAnnouncementGroup: isCommunityAnnouncementGroup,
+                                        groupType: groupType,
                                         unreadCount: Number(chat.unreadCount || 0),
                                         timestamp: time,
                                         t: time,
@@ -291,7 +315,7 @@ class WWebJSPatcher {
                                         pushname: chat.pushname || '',
                                         _data: {
                                             notifyName: chat._data?.notifyName || chat.pushname || '',
-                                            isParentGroup: Boolean(chat.isParentGroup || chat._data?.isParentGroup)
+                                            isParentGroup: isParentGroup
                                         },
                                         lastMessage: lastMsg
                                     });
@@ -315,122 +339,10 @@ class WWebJSPatcher {
                         }
 
                         const rawChats = await client.pupPage.evaluate(async () => {
-                            let chats = null;
-                            try {
-                                const collections = window.require('WAWebCollections');
-                                if (collections && collections.Chat) {
-                                    if (typeof collections.Chat.getModelsArray === 'function') {
-                                        chats = collections.Chat.getModelsArray();
-                                    } else if (Array.isArray(collections.Chat.models)) {
-                                        chats = collections.Chat.models;
-                                    } else if (typeof collections.Chat.toArray === 'function') {
-                                        chats = collections.Chat.toArray();
-                                    }
-                                }
-                            } catch (_) {}
-
-                            if (!chats || !Array.isArray(chats)) {
-                                try {
-                                    const chatCol = window.require('WAWebChatCollection');
-                                    const colInst = chatCol && (chatCol.ChatCollection || chatCol.default || chatCol);
-                                    if (colInst) {
-                                        if (typeof colInst.getModelsArray === 'function') {
-                                            chats = colInst.getModelsArray();
-                                        } else if (Array.isArray(colInst.models)) {
-                                            chats = colInst.models;
-                                        }
-                                    }
-                                } catch (_) {}
+                            if (window.WWebJS && typeof window.WWebJS.getChats === 'function') {
+                                return window.WWebJS.getChats();
                             }
-
-                            if (!chats || !Array.isArray(chats)) {
-                                try {
-                                    if (window.Store && window.Store.Chat) {
-                                        if (typeof window.Store.Chat.getModelsArray === 'function') {
-                                            chats = window.Store.Chat.getModelsArray();
-                                        } else if (Array.isArray(window.Store.Chat.models)) {
-                                            chats = window.Store.Chat.models;
-                                        }
-                                    }
-                                } catch (_) {}
-                            }
-
-                            if (!Array.isArray(chats) || chats.length === 0) {
-                                return [];
-                            }
-
-                            const cleanDTOs = [];
-                            for (let i = 0; i < chats.length; i++) {
-                                const chat = chats[i];
-                                if (!chat || !chat.id) continue;
-                                const serializedId = chat.id._serialized || (typeof chat.id === 'string' ? chat.id : '');
-                                if (!serializedId) continue;
-
-                                const isGroup = Boolean(serializedId.endsWith('@g.us') || chat.id.server === 'g.us' || chat.isGroup);
-                                const isBroadcast = Boolean(chat.isBroadcast || serializedId.endsWith('@broadcast'));
-                                const title = chat.formattedTitle || chat.name || (isGroup ? 'Grupo' : '');
-                                const time = Number(chat.t || chat.timestamp || 0);
-
-                                let lastMsg = null;
-                                if (chat.lastMessage) {
-                                    lastMsg = {
-                                        id: chat.lastMessage.id?._serialized || String(chat.lastMessage.id || ''),
-                                        body: typeof chat.lastMessage.body === 'string' ? chat.lastMessage.body : '',
-                                        type: chat.lastMessage.type || 'chat',
-                                        timestamp: Number(chat.lastMessage.t || chat.lastMessage.timestamp || 0),
-                                        fromMe: Boolean(chat.lastMessage.fromMe),
-                                        author: chat.lastMessage.author || ''
-                                    };
-                                }
-
-                                let participantCount = 0;
-                                if (isGroup) {
-                                    if (Array.isArray(chat.groupMetadata?.participants)) {
-                                        participantCount = chat.groupMetadata.participants.length;
-                                    } else if (Array.isArray(chat._data?.groupMetadata?.participants)) {
-                                        participantCount = chat._data.groupMetadata.participants.length;
-                                    } else if (Array.isArray(chat.participants)) {
-                                        participantCount = chat.participants.length;
-                                    }
-                                }
-
-                                cleanDTOs.push({
-                                    id: {
-                                        _serialized: serializedId,
-                                        server: isGroup ? 'g.us' : (chat.id.server || 'c.us'),
-                                        user: chat.id.user || serializedId.replace(/@.*$/, '')
-                                    },
-                                    name: title,
-                                    formattedTitle: title,
-                                    isGroup: isGroup,
-                                    isBroadcast: isBroadcast,
-                                    isParentGroup: Boolean(chat.isParentGroup || chat._data?.isParentGroup),
-                                    isCommunity: Boolean(chat.isCommunity || chat._data?.isCommunity),
-                                    isCommunityAnnouncementGroup: Boolean(chat.isCommunityAnnouncementGroup || chat._data?.isCommunityAnnouncementGroup),
-                                    unreadCount: Number(chat.unreadCount || 0),
-                                    timestamp: time,
-                                    t: time,
-                                    pinned: Boolean(chat.pinned),
-                                    isPinned: Boolean(chat.pinned),
-                                    isReadOnly: Boolean(chat.isReadOnly),
-                                    isMuted: Boolean(chat.isMuted || (chat.mute && chat.mute.expiration !== 0)),
-                                    mute: { expiration: chat.mute?.expiration || 0 },
-                                    groupMetadata: isGroup ? {
-                                        participants: new Array(participantCount).fill(null).map((_, idx) => ({ id: { _serialized: 'p_' + idx } }))
-                                    } : null,
-                                    contact: {
-                                        name: chat.contact?.name || '',
-                                        pushname: chat.contact?.pushname || ''
-                                    },
-                                    pushname: chat.pushname || '',
-                                    _data: {
-                                        notifyName: chat._data?.notifyName || chat.pushname || '',
-                                        isParentGroup: Boolean(chat.isParentGroup || chat._data?.isParentGroup)
-                                    },
-                                    lastMessage: lastMsg
-                                });
-                            }
-                            return cleanDTOs;
+                            return [];
                         });
 
                         if (!Array.isArray(rawChats)) {
@@ -438,7 +350,18 @@ class WWebJSPatcher {
                         }
 
                         const ChatFactory = require('whatsapp-web.js/src/factories/ChatFactory');
-                        return rawChats.map(c => ChatFactory.create(client, c));
+                        return rawChats.map(c => {
+                            const chatInstance = ChatFactory.create(client, c);
+                            if (chatInstance) {
+                                chatInstance.isParentGroup = Boolean(c.isParentGroup);
+                                chatInstance.groupType = c.groupType || '';
+                                chatInstance.isCommunity = Boolean(c.isCommunity);
+                                chatInstance.isCommunityAnnouncementGroup = Boolean(c.isCommunityAnnouncementGroup);
+                                chatInstance.groupMetadata = c.groupMetadata || chatInstance.groupMetadata;
+                                chatInstance._data = c._data || chatInstance._data;
+                            }
+                            return chatInstance;
+                        });
                     } catch (err) {
                         console.error('[WWebJS Patch] Erro em client.getChats:', err.message);
                         return [];
