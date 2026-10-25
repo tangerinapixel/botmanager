@@ -9,15 +9,16 @@ const path = require('path');
  * @param {String} mensagem - Texto da mensagem (usado como legenda se houver imagem)
  * @param {String|null} imagePath - Caminho local da imagem (opcional)
  */
-async function enviarComOuSemImagem(client, contato, mensagem, imagePath) {
+async function enviarComOuSemImagem(client, contato, mensagem, imagePath, jid) {
+  const destinatario = jid || `${contato.numero}@c.us`;
   try {
     if (imagePath && fs.existsSync(imagePath)) {
       const media = MessageMedia.fromFilePath(path.resolve(imagePath));
-      await client.sendMessage(`${contato.numero}@c.us`, media, {
+      await client.sendMessage(destinatario, media, {
         caption: mensagem
       });
     } else {
-      await client.sendMessage(`${contato.numero}@c.us`, mensagem);
+      await client.sendMessage(destinatario, mensagem);
     }
   } catch (err) {
     throw new Error(`Erro ao enviar mensagem para ${contato.numero}: ${err.message}`);

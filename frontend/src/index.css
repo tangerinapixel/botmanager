@@ -1,13 +1,181 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* ============================================================
+   DESIGN SYSTEM — WHATSAPP BOT UI
+   Dark Mode Premium · Glassmorphism · macOS-inspired
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ── PALETA DE CORES ─────────────────────────────────────── */
+:root {
+  /* Backgrounds */
+  --bg-base:          #0f1117;
+  --bg-surface:       #161b27;
+  --bg-elevated:      #1c2333;
+  --bg-overlay:       #212840;
+  --bg-hover:         rgba(255, 255, 255, 0.05);
+  --bg-active:        rgba(255, 255, 255, 0.08);
+
+  /* Glass */
+  --glass-bg:         rgba(28, 35, 51, 0.75);
+  --glass-border:     rgba(255, 255, 255, 0.08);
+  --glass-shadow:     0 8px 32px rgba(0, 0, 0, 0.45);
+  --glass-blur:       blur(16px);
+
+  /* Brand / Accent */
+  --accent-primary:   #4f8ef7;
+  --accent-primary-hover: #6aa1ff;
+  --accent-secondary: #7c5cbf;
+  --accent-success:   #25d366;
+  --accent-success-muted: rgba(37, 211, 102, 0.15);
+  --accent-warning:   #f0a500;
+  --accent-danger:    #e05252;
+  --accent-danger-muted: rgba(224, 82, 82, 0.12);
+
+  /* Texto */
+  --text-primary:     #e8eaf6;
+  --text-secondary:   #9aa3b8;
+  --text-muted:       #5a6278;
+  --text-disabled:    #3a4055;
+  --text-on-accent:   #ffffff;
+
+  /* Bordas */
+  --border-subtle:    rgba(255, 255, 255, 0.06);
+  --border-default:   rgba(255, 255, 255, 0.1);
+  --border-strong:    rgba(255, 255, 255, 0.18);
+  --border-accent:    rgba(79, 142, 247, 0.4);
+
+  /* Sombras */
+  --shadow-sm:        0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md:        0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg:        0 12px 40px rgba(0, 0, 0, 0.6);
+  --shadow-glow-blue: 0 0 20px rgba(79, 142, 247, 0.2);
+  --shadow-glow-green:0 0 20px rgba(37, 211, 102, 0.2);
+
+  /* Raios */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-pill: 999px;
+
+  /* Espaçamentos */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Tipografia */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-size-xs:   0.72rem;
+  --font-size-sm:   0.825rem;
+  --font-size-md:   0.9rem;
+  --font-size-base: 1rem;
+  --font-size-lg:   1.1rem;
+  --font-size-xl:   1.3rem;
+  --font-size-2xl:  1.6rem;
+
+  /* Transições */
+  --transition-fast:   all 0.15s ease;
+  --transition-normal: all 0.25s ease;
+  --transition-slow:   all 0.4s ease;
+
+  /* Scrollbar */
+  --scrollbar-track: #0f1117;
+  --scrollbar-thumb: #2a3048;
+  --scrollbar-thumb-hover: #3d4a6a;
 }
 
+/* ── RESET & BASE ────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.5;
+}
+
+/* ── SCROLLBAR GLOBAL ────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: var(--radius-pill);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* ── SELEÇÃO DE TEXTO ────────────────────────────────────── */
+::selection {
+  background: rgba(79, 142, 247, 0.3);
+  color: var(--text-primary);
+}
+
+/* ── LINKS ───────────────────────────────────────────────── */
+a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: var(--transition-fast);
+}
+a:hover {
+  color: var(--accent-primary-hover);
+}
+
+/* ── ANIMAÇÕES GLOBAIS ───────────────────────────────────── */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(32px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ── CÓDIGO ──────────────────────────────────────────────── */
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', Consolas, monospace;
+  font-size: 0.875em;
+  background: var(--bg-overlay);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  color: var(--accent-primary);
 }

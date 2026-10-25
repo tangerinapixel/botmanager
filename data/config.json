@@ -1,3 +1,4 @@
 {
-  "tempoExpiracaoMinutos": 17
+  "tempoExpiracaoMinutos": 3,
+  "saudacaoAtiva": false
 }

@@ -19,7 +19,7 @@ export default function ExportarEtiquetasModal({ open, onClose }) {
     // A lógica para carregar as etiquetas permanece a mesma
     if (open) {
       setLoading(true);
-      fetch('http://localhost:5001/api/etiquetas-com-total')
+      fetch('http://localhost:5005/api/etiquetas-com-total')
         .then(res => res.ok ? res.json() : Promise.reject(res))
         .then(data => {
           if (data && Array.isArray(data.etiquetas)) setEtiquetas(data.etiquetas);
@@ -27,7 +27,7 @@ export default function ExportarEtiquetasModal({ open, onClose }) {
         })
         .catch(err => {
           console.error("Erro ao carregar etiquetas:", err);
-          notify('❌ Falha ao carregar etiquetas.', 'error');
+          notify('Falha ao carregar etiquetas.', 'error');
           setEtiquetas([]);
         })
         .finally(() => setLoading(false));
@@ -51,12 +51,12 @@ useEffect(() => {
 const handleExport = async () => {
    debugger;
   if (!selectedId) {
-    notify('⚠️ Por favor, selecione uma etiqueta para exportar.', 'warning');
+    notify('Por favor, selecione uma etiqueta para exportar.', 'warning');
     return;
   }
   
   setLoading(true);
-  notify('⏳ Iniciando exportação... Por favor, aguarde a janela para salvar.', 'info');
+  notify('Iniciando exportação... Por favor, aguarde a janela para salvar.', 'info');
 
   try {
     // A CORREÇÃO ESTÁ AQUI:
@@ -73,7 +73,7 @@ const handleExport = async () => {
   } catch (err) {
     // Este catch agora é menos provável de ser atingido, mas é bom manter.
     console.error('Erro ao solicitar exportação:', err);
-    notify(`❌ Erro inesperado ao solicitar exportação.`, 'error');
+    notify(`Erro inesperado ao solicitar exportação.`, 'error');
   } finally {
     // O setLoading pode ser setado para false aqui,
     // ou de forma mais precisa, após o download ser concluído.

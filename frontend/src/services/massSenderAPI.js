@@ -1,6 +1,6 @@
 // src/services/massSenderAPI.js
 
-const BASE_URL = 'http://localhost:5001/api';
+const BASE_URL = 'http://localhost:5005/api';
 
 export const enviarMensagemEmMassa = async (formData) => {
   try {

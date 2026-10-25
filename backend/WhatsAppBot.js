@@ -9,16 +9,18 @@ class WhatsAppBot {
     this.client = new Client({
       authStrategy: new LocalAuth(),
       puppeteer: {
-        headless: false,  // Importante: isso faz com que o Chromium abra visualmente
+        headless: true,
         args: [
+          '--headless',
+          '--disable-gpu',
           '--no-sandbox',
+          '--disable-software-rasterizer',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-accelerated-2d-canvas',
           '--no-first-run',
           '--no-zygote',
-          '--single-process',
-          '--disable-gpu'
+          '--single-process'
         ]
       }
     });

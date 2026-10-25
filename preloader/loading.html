@@ -2,16 +2,91 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Carregando...</title>
+  <title>Bot Manager X</title>
   <link rel="stylesheet" href="stilodo.css">
 </head>
 <body>
-  <div class="container">
-    <div class="spinner">
-      <div class="dot1"></div>
-      <div class="dot2"></div>
+  <div class="splash-card" id="splashCard">
+    <div class="splash-header">
+      <img src="../assets/chatb.png" alt="Bot Manager X" class="splash-icon">
+      <div class="splash-brand">
+        <h1 class="splash-title">
+          Bot Manager X
+          <span class="splash-badge">v2.1.6</span>
+        </h1>
+        <div class="splash-tagline">Automação Inteligente de Atendimento</div>
+      </div>
     </div>
-    <p class="loading-text">Iniciando Bot Manager X...</p>
+    
+    <div class="progress-box">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-info">
+        <span class="status-subtext" id="statusText">Inicializando serviços...</span>
+        <span class="progress-percentage" id="progressPercent">0%</span>
+      </div>
+    </div>
   </div>
+
+  <script>
+    (function() {
+      let currentPercent = 0;
+      const fillEl = document.getElementById('progressFill');
+      const percentEl = document.getElementById('progressPercent');
+      const statusEl = document.getElementById('statusText');
+      const cardEl = document.getElementById('splashCard');
+
+      const statuses = [
+        { threshold: 0, text: 'Inicializando serviços...' },
+        { threshold: 25, text: 'Carregando módulos do sistema...' },
+        { threshold: 55, text: 'Conectando ao servidor local...' },
+        { threshold: 80, text: 'Preparando painel de controle...' },
+        { threshold: 100, text: 'Pronto! Abrindo aplicação...' }
+      ];
+
+      function updateProgress(value) {
+        currentPercent = Math.min(100, Math.max(currentPercent, value));
+        if (fillEl) fillEl.style.width = currentPercent + '%';
+        if (percentEl) percentEl.innerText = Math.round(currentPercent) + '%';
+        
+        for (let i = statuses.length - 1; i >= 0; i--) {
+          if (currentPercent >= statuses[i].threshold) {
+            if (statusEl) statusEl.innerText = statuses[i].text;
+            break;
+          }
+        }
+      }
+
+      // Progressão suave e orgânica até 94% enquanto backend e interface carregam
+      const interval = setInterval(() => {
+        if (currentPercent < 94) {
+          const remaining = 94 - currentPercent;
+          const step = Math.max(0.18, remaining * 0.05);
+          updateProgress(currentPercent + step);
+        }
+      }, 90);
+
+      function handleReady() {
+        clearInterval(interval);
+        updateProgress(100);
+        if (cardEl) cardEl.classList.add('is-ready');
+      }
+
+      if (window.electronAPI && typeof window.electronAPI.onBackendStatus === 'function') {
+        window.electronAPI.onBackendStatus((event, data) => {
+          const payload = data || event;
+          if (payload && payload.status === 'ready') {
+            handleReady();
+          } else if (payload && payload.status === 'restarting') {
+            if (statusEl && payload.message) statusEl.innerText = payload.message;
+          } else if (payload && payload.status === 'failed') {
+            clearInterval(interval);
+            if (statusEl && payload.message) statusEl.innerText = payload.message;
+          }
+        });
+      }
+    })();
+  </script>
 </body>
 </html>

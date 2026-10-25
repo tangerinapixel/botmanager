@@ -8,7 +8,7 @@ import * as XLSX from 'xlsx';
 import io from 'socket.io-client';
 import { useNotifier } from '../context/Notifier'; // NOVO: Importar o useNotifier
 
-const socket = io('http://localhost:5001');
+const socket = io('http://localhost:5005');
 
 function ModalMassMessage({ open, onClose }) {
   const [contacts, setContacts] = useState([]);
@@ -27,7 +27,7 @@ function ModalMassMessage({ open, onClose }) {
       const percentual = total > 0 ? Math.round((progressoAtual / total) * 100) : 0;
       setProgresso(percentual);
       if (enviado) {
-        setUltimoEnviado(sucesso ? `✅ ${enviado}` : `❌ ${enviado} (Falha: ${erro || 'Erro desconhecido'})`);
+        setUltimoEnviado(sucesso ? `Sucesso: ${enviado}` : `Falha: ${enviado} (Falha: ${erro || 'Erro desconhecido'})`);
       }
       // Poderia adicionar um notify aqui para cada sucesso/falha individual se desejado,
       // mas pode ser muito verboso. Um resumo no final é melhor.
@@ -43,13 +43,13 @@ function ModalMassMessage({ open, onClose }) {
       if (data.sucessoGeral) { // Assumindo que o backend envie um status geral
         // A mensagem original do alert era: `✅ Envio finalizado!\n\nSucesso: ${data.enviados}\nFalhas: ${data.falhas}`
         // Vamos simplificar para o notify, os detalhes já estão no console.
-        notify(`✅ Envio finalizado! (Sucesso: ${data.enviados ?? 0} / Falhas: ${data.falhas ?? 0})`, 'success');
+        notify(`Envio finalizado! (Sucesso: ${data.enviados ?? 0} / Falhas: ${data.falhas ?? 0})`, 'success');
         if (data.detalhes) {
             if (data.detalhes.enviados) console.table(data.detalhes.enviados);
             if (data.detalhes.falhas) console.table(data.detalhes.falhas);
         }
       } else {
-        notify(data.message || '❌ Ocorreu um erro no envio em massa.', 'error');
+        notify(data.message || 'Ocorreu um erro no envio em massa.', 'error');
       }
       // Considerar se o modal deve fechar automaticamente aqui ou se o usuário fecha manualmente.
       // onClose(); // Se quiser fechar o modal após a notificação.
@@ -77,7 +77,7 @@ function ModalMassMessage({ open, onClose }) {
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // Ler como array de arrays
 
         if (rows.length === 0) {
-          notify('⚠️ Planilha vazia ou formato incorreto.', 'warning');
+          notify('Planilha vazia ou formato incorreto.', 'warning');
           setContacts([]);
           return;
         }
@@ -88,7 +88,7 @@ function ModalMassMessage({ open, onClose }) {
         const nomeIndex = headerRow.findIndex(h => h.includes('nome'));
 
         if (numeroIndex === -1) {
-          notify('❌ Coluna "Número" ou "Telefone" não encontrada na planilha.', 'error');
+          notify('Coluna "Número" ou "Telefone" não encontrada na planilha.', 'error');
           setContacts([]);
           return;
         }
@@ -104,20 +104,20 @@ function ModalMassMessage({ open, onClose }) {
           }).filter(c => c.number); // Filtra apenas os que têm número
 
         if (loadedContacts.length === 0) {
-          notify('ℹ️ Nenhum contato com número válido encontrado na planilha.', 'info');
+          notify('Nenhum contato com número válido encontrado na planilha.', 'info');
         } else {
-          notify(`👍 ${loadedContacts.length} contatos carregados da planilha!`, 'success');
+          notify(`${loadedContacts.length} contatos carregados da planilha!`, 'success');
         }
         setContacts(loadedContacts);
 
       } catch (error) {
         console.error("Erro ao processar planilha:", error);
-        notify('❌ Erro ao processar a planilha. Verifique o formato.', 'error');
+        notify('Erro ao processar a planilha. Verifique o formato.', 'error');
         setContacts([]);
       }
     };
     reader.onerror = () => {
-        notify('❌ Erro ao ler o arquivo da planilha.', 'error');
+        notify('Erro ao ler o arquivo da planilha.', 'error');
         setContacts([]);
     }
     reader.readAsArrayBuffer(file);
@@ -129,25 +129,25 @@ function ModalMassMessage({ open, onClose }) {
     if (file) {
         // Validação opcional de tamanho/tipo aqui
         setImage(file);
-        notify(`📷 Imagem "${file.name}" selecionada.`, 'info');
+        notify(`Imagem "${file.name}" selecionada.`, 'info');
     }
     e.target.value = null; // Limpa o input
   };
 
   const handleSend = async () => {
     if (!message.trim() && !image) { // Verifica se há mensagem OU imagem
-        notify('⚠️ Por favor, escreva uma mensagem ou selecione uma imagem.', 'warning');
+        notify('Por favor, escreva uma mensagem ou selecione uma imagem.', 'warning');
         return;
     }
     if (contacts.length === 0) {
-        notify('⚠️ Por favor, carregue uma planilha com contatos.', 'warning');
+        notify('Por favor, carregue uma planilha com contatos.', 'warning');
         return;
     }
 
     setLoading(true);
     setProgresso(0);
     setUltimoEnviado('');
-    notify('🚀 Iniciando envio em massa...', 'info');
+    notify('Iniciando envio em massa...', 'info');
 
     const formData = new FormData();
     formData.append('message', message);
@@ -163,7 +163,7 @@ function ModalMassMessage({ open, onClose }) {
     // A chamada fetch para /api/send-mass agora só inicia o processo no backend.
     // O resultado final e o progresso virão via Socket.IO.
     try {
-        const response = await fetch('http://localhost:5001/api/send-mass', { // Certifique-se que a porta está correta
+        const response = await fetch('http://localhost:5005/api/send-mass', { // Certifique-se que a porta está correta
             method: 'POST',
             body: formData,
         });
@@ -172,7 +172,7 @@ function ModalMassMessage({ open, onClose }) {
 
         if (!response.ok || !data.success) { // Verifica se o backend conseguiu iniciar o processo
             setLoading(false);
-            notify(data.message || '❌ Falha ao iniciar o processo de envio em massa no servidor.', 'error');
+            notify(data.message || 'Falha ao iniciar o processo de envio em massa no servidor.', 'error');
             // Não fechar o modal aqui, pois o usuário pode querer tentar de novo ou ver o erro.
             return;
         }
@@ -184,7 +184,7 @@ function ModalMassMessage({ open, onClose }) {
     } catch (error) {
         console.error("Erro na requisição para /api/send-mass:", error);
         setLoading(false);
-        notify('❌ Erro de conexão ao tentar iniciar o envio em massa.', 'error');
+        notify('Erro de conexão ao tentar iniciar o envio em massa.', 'error');
     }
     // Removido: onClose(); // O modal não deve fechar automaticamente ao clicar em enviar
   };

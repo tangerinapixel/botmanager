@@ -1,61 +1,77 @@
-body {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  overflow-x: hidden;
-  font-family: Arial, sans-serif;
-  background-color: #f5f5f5;
-  min-height: 100vh;
+/* ============================================================
+   APP.CSS — Estilos de Layout e Componentes Base
+   Usa exclusivamente variáveis de index.css
+   ============================================================ */
+
+/* ── CONTAINER PRINCIPAL ─────────────────────────────────── */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
 }
 
+/* ── ÁREA DE CONTEÚDO COM SCROLL ─────────────────────────── */
+.main-content-area {
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  padding: var(--space-5);
+  gap: var(--space-4);
+}
+
+/* ── LAYOUT PRINCIPAL (COLUNAS) ──────────────────────────── */
 .main-flex {
   display: flex;
-  flex-direction: row; 
-  gap: 16px;
-  padding: 16px;
-  align-items: flex-start;}
+  flex-direction: row;
+  gap: var(--space-4);
+  align-items: flex-start;
+  width: 100%;
+}
 
+/* ── COLUNA / CARD GENÉRICO ──────────────────────────────── */
+.main-column {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow-md);
+  transition: var(--transition-normal);
+}
+
+.main-column:hover {
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ── COLUNA DE SAUDAÇÕES ─────────────────────────────────── */
 .greeting-box {
   flex: 1 1 300px;
-  min-width: 300px;
-  max-width: 400px;
-  width: 100%;
-  border: 0px solid hwb(203 66% 24%);
-  padding: 10px;
-  border-radius: 4px;
-  padding-top: 20px;
-  height: 554px;
-  background: white;
-
+  min-width: 280px;
+  max-width: 380px;
+  min-height: 500px;
 }
 
-/* Responsivo para telas grandes: layout lado a lado */
-@media screen and (min-width: 1024px) {
-  .greeting-box {
-    flex: 0 0 320px;
-  }
-
+/* ── COLUNA DE FLUXOS ────────────────────────────────────── */
+.flow-box {
+  flex: 1 1 300px;
+  min-width: 280px;
 }
 
-/* FORMULÁRIO DE ADIÇÃO DE FLUXO */
+/* ── FORMULÁRIO DE FLUXO ─────────────────────────────────── */
 .flow-form-wrapper {
   max-width: 600px;
   width: 100%;
-  margin-top: 20px;
+  margin-top: var(--space-5);
 }
 
-.card input,
-.card textarea {
-  width: 100%;
-  font-size: 16px;
-  margin-bottom: 10px;
-  padding: 10px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  box-sizing: border-box;
-  font-family: Arial, sans-serif;
-}
-
+/* ── CARD BASE ───────────────────────────────────────────── */
 .card {
   border: none;
   background: none;
@@ -64,130 +80,134 @@ body {
   box-shadow: none;
 }
 
+.card input,
+.card textarea {
+  width: 100%;
+  font-size: var(--font-size-md);
+  margin-bottom: var(--space-3);
+  padding: 9px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
+  font-family: var(--font-family);
+  background: rgba(28, 35, 51, 0.7);
+  color: var(--text-primary);
+  transition: var(--transition-fast);
+  outline: none;
+  backdrop-filter: blur(8px);
+}
 
-/* Botão salvar fluxo */
+.card input:hover,
+.card textarea:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.card input:focus,
+.card textarea:focus {
+  border-color: var(--accent-primary);
+  border-width: 1.5px;
+  background: rgba(33, 42, 64, 0.85);
+  box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.14);
+}
+
+.card input::placeholder,
+.card textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+.card input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 100px #1c2333 inset;
+  -webkit-text-fill-color: var(--text-primary);
+}
+
+/* ── BOTÕES BASE ─────────────────────────────────────────── */
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
   padding: 10px 20px;
-  font-size: 16px;
+  font-size: var(--font-size-md);
+  font-family: var(--font-family);
+  font-weight: 500;
   border: none;
-  color: white;
+  color: var(--text-on-accent);
   cursor: pointer;
-  margin-top: 10px;
-  border-radius: 5px;
+  margin-top: var(--space-3);
+  border-radius: var(--radius-md);
+  transition: var(--transition-fast);
+  letter-spacing: 0.02em;
+}
+
+.btn:active {
+  transform: scale(0.97);
 }
 
 .btn.green {
-  background-color: #28a745;
+  background: linear-gradient(135deg, #1aab55, var(--accent-success));
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.3);
+}
+.btn.green:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
 }
 
 .btn.blue {
-  background-color: #007bff;
+  background: linear-gradient(135deg, #3a78e8, var(--accent-primary));
+  box-shadow: 0 4px 14px rgba(79, 142, 247, 0.3);
 }
-
-/* Imagem do QR Code */
-.qr-area img {
-  max-width: 300px;
-  margin: 20px auto;
-  display: block;
-}
-
-/* Responsividade geral */
-@media screen and (max-width: 768px) {
-  .main-flex {
-    flex-direction: column;
-    padding: 10px;
-  }
-
-  .greeting-box,
-  .flow-box {
-    max-width: 100%;
-  }
-
-  .card {
-    max-width: 100%;
-  }
-
-  .card input,
-  .card textarea {
-    width: 100%;
-    font-size: 16px;
-  }
-
-  .btn.blue {
-    display: block;
-    margin-left: 0;
-    margin-top: 10px;
-  }
-}
-.dialog-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-.dialog-box {
-  background: #fff;
-  padding: 25px;
-  border-radius: 10px;
-  width: 300px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+.btn.blue:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 6px 20px rgba(79, 142, 247, 0.4);
 }
 
 .btn.gray {
-  background-color: #aaa;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 5px;
-  cursor: pointer;
+  background: var(--bg-overlay);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+}
+.btn.gray:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .btn.red {
-  background-color: #d9534f;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 5px;
-  cursor: pointer;
+  background: linear-gradient(135deg, #c0392b, var(--accent-danger));
+  box-shadow: 0 4px 14px rgba(224, 82, 82, 0.3);
+}
+.btn.red:hover {
+  filter: brightness(1.1);
 }
 
+/* ── BOTÃO DE AÇÃO (ÍCONE) ───────────────────────────────── */
 .btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background-color: transparent;
-  color: #1976d2; /* azul do botão EDITAR */
+  color: var(--accent-primary);
   border: none;
-  padding:8px 8px 8px 8px; /* espaçamento interno do icon */
-  border-radius: 60px;
-  font-weight: 500; /* tamanho do icone */
-  font-size: 14px;
+  padding: var(--space-2);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
-  margin-right: 0px; /* espaçamento horizontal */
+  transition: var(--transition-fast);
 }
 
 .btn-action:hover {
-  background-color: rgba(25, 118, 210, 0.1); /* leve fundo circular */
-  color: #1565c0; /* azul um pouco mais forte no hover */
+  background-color: rgba(79, 142, 247, 0.12);
+  color: var(--accent-primary-hover);
 }
 
-.flows-grid .MuiButton-root,
-.flows-grid .btn-action {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
+/* ── TOGGLE SWITCH ───────────────────────────────────────── */
 .switch {
   position: relative;
   display: inline-block;
-  width: 50px;
-  height: 28px;
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
 }
 
 .switch input {
@@ -200,68 +220,132 @@ body {
   position: absolute;
   cursor: pointer;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
-  border-radius: 34px;
+  background-color: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.25s ease;
+  border-radius: 999px;
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 22px; width: 22px;
-  left: 3px; bottom: 3px;
-  background-color: white;
-  transition: .4s;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 2px;
+  background-color: #8892a4;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s ease;
   border-radius: 50%;
 }
 
 input:checked + .slider {
-  background-color: #4CAF50;
+  background-color: var(--accent-success);
+  border-color: var(--accent-success);
+  box-shadow: 0 0 10px rgba(37, 211, 102, 0.35);
 }
 
 input:checked + .slider:before {
-  transform: translateX(22px);
+  transform: translateX(18px);
+  background-color: white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
+/* ── QR CODE AREA ────────────────────────────────────────── */
+.qr-area img {
+  max-width: 260px;
+  margin: var(--space-5) auto;
+  display: block;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ── DIALOG / MODAL ──────────────────────────────────────── */
+.dialog-backdrop {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.15s ease;
+}
+
+.dialog-box {
+  background: var(--bg-elevated);
+  border: 1px solid var(--glass-border);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  width: 320px;
+  box-shadow: var(--shadow-lg);
+  color: var(--text-primary);
+  animation: slideUp 0.2s ease;
+}
+
+/* ── BOX DE TEMPO DE EXPIRAÇÃO ───────────────────────────── */
 .box-tempo-expiracao {
-  background-color: #f0f4ff;
-  border-left: 0px solid #3675be;
-  border-radius: 5px;
-  padding: 15px;
-  margin-bottom: 20px;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  gap: var(--space-3);
   flex-wrap: wrap;
 }
+
 .box-tempo-expiracao .icon {
-  font-size: 24px;
-  color: #4a90e2;
+  font-size: 22px;
+  color: var(--accent-primary);
 }
+
 .box-tempo-expiracao .tempo-label {
-  font-weight: bold;
-  margin-bottom: 5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-2);
 }
+
 .box-tempo-expiracao .tempo-input {
-  padding: 5px;
-  width: 60px;
-  margin-right: 10px;
-  border: 1px solid #4a90e2;
-  border-radius: 5px;
-  
+  padding: var(--space-2) var(--space-3);
+  width: 70px;
+  margin-right: var(--space-2);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  outline: none;
+  transition: var(--transition-fast);
 }
+
+.box-tempo-expiracao .tempo-input:focus {
+  box-shadow: 0 0 0 2px rgba(79, 142, 247, 0.2);
+}
+
 .box-tempo-expiracao .tempo-btn {
-  padding: 6px 12px;
-  background-color: #4a90e2;
+  padding: var(--space-2) var(--space-4);
+  background: linear-gradient(135deg, #3a78e8, var(--accent-primary));
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  transition: var(--transition-fast);
 }
 
-/* BulkSenderModal.css */
+.box-tempo-expiracao .tempo-btn:hover {
+  filter: brightness(1.15);
+}
 
+/* ── BULK SENDER MODAL ───────────────────────────────────── */
 .bulk-modal {
   width: 90vw;
   max-width: 1200px;
@@ -269,95 +353,200 @@ input:checked + .slider:before {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 1.5rem;
+  gap: var(--space-4);
+  padding: var(--space-6);
   overflow: hidden;
+  background: var(--bg-elevated);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
 }
 
 .bulk-column {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
   overflow: hidden;
 }
 
 .bulk-contact-list {
   flex: 1;
   overflow-y: auto;
-  border: 1px solid #ccc;
-  padding: 0.5rem;
-  border-radius: 8px;
-  background: #f9f9f9;
+  border: 1px solid var(--border-default);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
 }
 
 .bulk-message-area textarea {
   width: 100%;
   height: 150px;
   resize: vertical;
-  padding: 0.5rem;
-  font-size: 1rem;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  padding: var(--space-3);
+  font-size: var(--font-size-base);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  outline: none;
+  transition: var(--transition-fast);
+}
+
+.bulk-message-area textarea:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.1);
 }
 
 .bulk-progress {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4);
+  color: var(--text-secondary);
 }
 
 .bulk-upload-preview {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  border: 1px dashed #aaa;
-  padding: 1rem;
-  border-radius: 8px;
+  gap: var(--space-4);
+  border: 1px dashed var(--border-default);
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
   text-align: center;
-  background: #fff;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
 }
 
 .bulk-upload-preview img {
   max-width: 100%;
   max-height: 200px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
 }
 
 .bulk-footer-buttons {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
-.app-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  
-  background-color: #f4f6f8; 
-  min-height: 100vh; /* OPCIONAL: Garante que o fundo cinza preencha a tela se o conteúdo for muito curto, mas o footer ainda seguirá o conteúdo */
+/* ── CONFIGURAÇÕES IA ────────────────────────────────────── */
+.ia-config-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  color: var(--text-primary);
 }
 
-.main-column {
-  border: 1px solid #e0e0e0; 
-  border-radius: 8px;        
-  background-color: #ffffff; 
-  padding: 16px;             
+/* ── PÁGINA DE FLUXOS (VER TODOS) ────────────────────────── */
+.flows-page-container {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  box-sizing: border-box;
+  backdrop-filter: var(--glass-blur);
   display: flex;
   flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
-greeting-box, .flow-box, .flow-boxe {
-  /* Estilos comuns para as colunas */
-  flex: 1; /* Faz com que tentem ocupar o espaço horizontal disponível */
-  min-width: 300px; /* Garante uma largura mínima */
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: #ffffff;
-  padding: 16px;
+.flows-page-header {
   display: flex;
-  flex-direction: column;
-  /* REMOVA QUALQUER 'height' FIXA DAQUI */
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.flows-page-header h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+}
+
+.flows-page-container .flows-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
+}
+
+/* ── BOTÃO VER MAIS ──────────────────────────────────────── */
+.see-more-btn {
+  width: 100%;
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  color: var(--text-secondary);
+  text-align: center;
+  transition: var(--transition-fast);
+}
+
+.see-more-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+/* ── GRIDS DE FLUXOS ─────────────────────────────────────── */
+.flows-grid .MuiButton-root,
+.flows-grid .btn-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── ANIMAÇÕES ───────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* ── RESPONSIVO ──────────────────────────────────────────── */
+@media screen and (max-width: 900px) {
+  .main-flex {
+    flex-direction: column;
+  }
+  .greeting-box {
+    max-width: 100%;
+    min-height: auto;
+  }
+  .flows-page-container .flows-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .main-content-area {
+    padding: var(--space-3);
+  }
+  .main-column {
+    padding: var(--space-4);
+  }
+  .bulk-modal {
+    flex-direction: column;
+  }
 }

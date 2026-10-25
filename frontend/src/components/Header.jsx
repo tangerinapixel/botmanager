@@ -1,52 +1,106 @@
-import React from 'react';
-import { Typography, Button, IconButton, Tooltip, Box, CircularProgress } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
+// frontend/src/components/Header.jsx (VERSÃO COM ÍCONE DO WHATSAPP)
 
-function Header({ status, onConnect, onAbrirMass }) {
-  let statusText = '🔴 Desconectado';
-  let statusColor = 'red';
-  let buttonText = 'Conectar';
-  let buttonColor = 'error';
-  let showSpinnerInButton = false;
+import React, { useState, useEffect } from 'react';
+import { Typography, Button, IconButton, Tooltip, Box, CircularProgress } from '@mui/material';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faRobot } from '@fortawesome/free-solid-svg-icons';
+// MUDANÇA 1: Importa o ícone do WhatsApp
+import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
+
+import PulsatingDot from './PulsatingDot';
+
+// Componente auxiliar do progresso (não muda)
+function CircularProgressWithLabel(props) {
+  const displayValue = Math.min(props.value, 99);
+  return (
+    <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+      <CircularProgress variant="determinate" {...props} value={displayValue} />
+      <Box
+        sx={{
+          top: 0, left: 0, bottom: 0, right: 0,
+          position: 'absolute',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Typography variant="caption" component="div" color="inherit" sx={{ fontSize: '0.6rem', fontWeight: 'bold' }}>
+          {`${Math.round(displayValue)}%`}
+        </Typography>
+      </Box>
+    </Box>
+  );
+}
+
+// Componente para o texto animado (não muda)
+function AnimatedLoadingText() {
+  const [dots, setDots] = useState('');
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setDots(prevDots => (prevDots.length >= 3 ? '' : prevDots + '.'));
+    }, 400);
+    return () => clearInterval(intervalId);
+  }, []);
+  return <span>Carregando{dots}</span>;
+}
+
+
+function Header({ status, loadingProgress = 0, onConnect, onAbrirMass }) {
+  let statusElement;
+  let buttonText;
+  let buttonColor;
   let buttonDisabled = false;
+  let startIcon = null; // A variável que controla o ícone
+  let tooltipMessage = '';
   let hideStatusDisplay = false;
-  let tooltipMessage = 'Estabelecer conexão com o WhatsApp';
 
   switch (status) {
     case 'loading':
-      hideStatusDisplay = true;                 // Mantém o texto "Status: ..." escondido
-      showSpinnerInButton = true;               // Mostra o spinner no botão
-      buttonText = 'Conectando...';             // << NOVO: Texto dentro do botão durante o loading
-      buttonDisabled = true;                    // Mantém o botão desabilitado (aparência cinza)
-      buttonColor = 'inherit';                  // Para o spinner herdar a cor de texto desabilitado (cinza)
+      hideStatusDisplay = true;
+      buttonText = <AnimatedLoadingText />;
+      buttonColor = 'inherit';
+      buttonDisabled = true;
       tooltipMessage = 'Conectando ao WhatsApp...';
+      startIcon = <CircularProgressWithLabel value={loadingProgress} size={24} color="inherit" />;
       break;
+
     case 'qr':
-      statusText = '📱 Escaneie o QR Code';
-      statusColor = '#007bff';
+      statusElement = <span style={{ fontWeight: 'bold', color: '#007bff' }}>📱 Escaneie o QR Code</span>;
       buttonText = 'Gerar Novo QR';
-      buttonDisabled = false; // Permite clicar para tentar gerar novo QR ou conectar
       buttonColor = 'primary';
-      tooltipMessage = 'Solicitar novo QR Code ou tentar conectar';
+      tooltipMessage = 'Solicitar novo QR Code';
       break;
+
     case 'ready':
-      statusText = '🛜​ Conectado';
-      statusColor = 'green';
+      statusElement = (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <PulsatingDot />
+          <span style={{ fontWeight: 'bold', color: 'green' }}>Conectado</span>
+        </Box>
+      );
       buttonText = 'REINICIAR';
-      buttonColor = 'success'; 
+      buttonColor = 'success';
       tooltipMessage = 'Reiniciar conexão com o WhatsApp';
+      // MUDANÇA 2: Define o ícone do WhatsApp para o estado 'ready'
+      startIcon = <FontAwesomeIcon icon={faWhatsapp} />;
       break;
-    case 'auth_failure':
-      statusText = '⚠️ Falha na Autenticação';
-      statusColor = 'red';
-      buttonText = 'Tentar Novamente';
+
+    case 'no_internet':
+      statusElement = <span style={{ fontWeight: 'bold', color: '#ff9800' }}>🌐 Sem Conexão de Rede</span>;
+      buttonText = 'Reconectar';
+      buttonColor = 'warning';
+      tooltipMessage = 'Verifique sua conexão com a internet';
+      break;
+
+    case 'fatal_error':
+      statusElement = <span style={{ fontWeight: 'bold', color: '#f44336' }}>⚠️ Erro de Inicialização</span>;
+      buttonText = 'Recarregar';
       buttonColor = 'error';
-      tooltipMessage = 'Tentar conectar novamente ao WhatsApp';
+      tooltipMessage = 'Ocorreu um erro fatal ao inicializar o WhatsApp. Clique para tentar novamente.';
       break;
-    case 'disconnected':
+
     default:
-      statusText = '❌ ​Desconectado';
-      statusColor = 'red';
+      statusElement = <span style={{ fontWeight: 'bold', color: 'red' }}>🔴 Desconectado</span>;
       buttonText = 'Conectar';
       buttonColor = 'error';
       tooltipMessage = 'Estabelecer conexão com o WhatsApp';
@@ -54,44 +108,33 @@ function Header({ status, onConnect, onAbrirMass }) {
   }
 
   return (
-    <Box sx={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '10px 20px',
-      backgroundColor: '#eef',
-      borderBottom: '1px solid #ddd',
-      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
-      position: 'sticky',
-      top: 0,
-      zIndex: 999,
-      height: '48px',
-    }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <Tooltip title="Abrir painel de envio em massa">
-          <IconButton
-            aria-label="Abrir painel de envio em massa"
-            onClick={onAbrirMass}
-            color="primary"
-          >
-            <MenuIcon />
+    <Box 
+      component="header" 
+      className="app-header" 
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '10px 24px',
+        backgroundColor: '#f0f4ff',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.12)',
+        height: '60px'
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Tooltip title="Menu Principal / Ações">
+          <IconButton aria-label="Menu Principal / Ações" onClick={onAbrirMass} color="primary">
+            <FontAwesomeIcon icon={faRobot} /> 
           </IconButton>
         </Tooltip>
-        {/*<Typography variant="h5" fontWeight="bold">
-          👁️‍🗨️ Bot Manager X
-        </Typography>*/}
       </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
         {!hideStatusDisplay && (
           <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>
-            ♾️​{' '}
-            <span style={{ fontWeight: 'bold', color: statusColor, marginLeft: '4px' }}>
-              {statusText}
-            </span>
+            {statusElement}
           </Typography>
         )}
-
         <Tooltip title={tooltipMessage}>
           <span> 
             <Button
@@ -99,10 +142,11 @@ function Header({ status, onConnect, onAbrirMass }) {
               color={buttonColor}
               onClick={onConnect}
               disabled={buttonDisabled}
-              startIcon={showSpinnerInButton ? <CircularProgress size={20} color="inherit" /> : undefined } // undefined se não houver ícone
+              startIcon={startIcon} // A prop 'startIcon' exibe o ícone que definimos
               sx={{ 
-                minWidth: '140px', // Ajustado para acomodar "Conectando..." + spinner
-                textAlign: 'center' // Garante que o conteúdo do botão (ícone + texto) esteja centralizado
+                minWidth: '180px',
+                height: '42px',
+                borderRadius: '20px'
               }}
             >
               {buttonText}

@@ -1,14 +1,14 @@
 // backend/routes/exportarGrupos.js
 const express = require('express');
 const router = express.Router();
-const ExcelJS = require('exceljs');
 
-module.exports = function (client, handleCriticalClientErrorFunc) {
+module.exports = function (clientManager, handleCriticalClientErrorFunc) {
 
-  // ROTA PARA LISTAR TODOS OS GRUPOS (Já estava OK)
+  // ROTA PARA LISTAR TODOS OS GRUPOS
   router.get('/api/grupos', async (req, res) => {
     try {
-      if (!client.info) {
+      const client = clientManager.getClient();
+      if (!client || !client.info) {
         return res.status(503).json({ success: false, message: 'Cliente WhatsApp não está pronto.' });
       }
       const chats = await client.getChats();
@@ -19,7 +19,12 @@ module.exports = function (client, handleCriticalClientErrorFunc) {
       res.json({ success: true, grupos: grupos });
     } catch (err) {
       console.error('❌ Erro ao listar grupos:', err);
-      handleCriticalClientErrorFunc(err, 'GET /api/grupos');
+      if (typeof handleCriticalClientErrorFunc === 'function') {
+        const errMsg = (err.message || '').toLowerCase();
+        if (errMsg.includes('target closed') || errMsg.includes('session closed') || errMsg.includes('protocol error')) {
+          handleCriticalClientErrorFunc(err, 'GET /api/grupos');
+        }
+      }
       if (!res.headersSent) {
           res.status(500).json({ success: false, message: 'Erro ao buscar grupos.' });
       }
@@ -28,11 +33,12 @@ module.exports = function (client, handleCriticalClientErrorFunc) {
 
   // ROTA PARA EXPORTAR OS CONTATOS DE UM GRUPO ESPECÍFICO
   router.get('/api/exportar-grupo/:groupId', async (req, res) => {
-    const timestamp = new Date().toISOString(); // Para logs consistentes
+    const timestamp = new Date().toISOString();
     const originMessage = `GET /api/exportar-grupo/${req.params.groupId}`;
 
     try {
-      if (!client.info) {
+      const client = clientManager.getClient();
+      if (!client || !client.info) {
         console.warn(`[${timestamp}] [${originMessage}] Tentativa de exportar com cliente não pronto.`);
         return res.status(503).json({ success: false, message: 'Cliente WhatsApp ainda não está pronto.' });
       }
@@ -45,14 +51,30 @@ module.exports = function (client, handleCriticalClientErrorFunc) {
       }
 
       console.log(`[${timestamp}] [${originMessage}] Gerando arquivo Excel para o grupo "${chat.name}"...`);
+      let participantsList = [];
+      try {
+        if (Array.isArray(chat.groupMetadata?.participants)) {
+          participantsList = chat.groupMetadata.participants;
+        } else if (Array.isArray(chat._data?.groupMetadata?.participants)) {
+          participantsList = chat._data.groupMetadata.participants;
+        } else if (Array.isArray(chat.participants)) {
+          participantsList = chat.participants;
+        }
+      } catch (err) {
+        console.warn(`[${timestamp}] [${originMessage}] Aviso ao obter participantes do grupo:`, err.message);
+        participantsList = [];
+      }
+
       const contatos = [];
-      for (const participante of chat.participants) {
+      for (const participante of participantsList) {
+        if (!participante || !participante.id) continue;
         contatos.push({
-          numero: participante.id.user,
+          numero: participante.id.user || (typeof participante.id._serialized === 'string' ? participante.id._serialized.replace(/@.*$/, '') : ''),
           nome: participante.name || participante.pushname || ''
         });
       }
 
+      const ExcelJS = require('exceljs');
       const workbook = new ExcelJS.Workbook();
       // AJUSTE 1: Limita o nome da aba da planilha para 31 caracteres para evitar o aviso do ExcelJS
       const safeSheetName = `Contatos - ${chat.name}`.substring(0, 31);
@@ -84,7 +106,12 @@ res.setHeader('Content-Disposition', `attachment; filename="contatos_grupo_${saf
       
     } catch (err) {
       console.error(`❌ Erro em ${originMessage}:`, err);
-      handleCriticalClientErrorFunc(err, 'GET /api/exportar-grupo');
+      if (typeof handleCriticalClientErrorFunc === 'function') {
+        const errMsg = (err.message || '').toLowerCase();
+        if (errMsg.includes('target closed') || errMsg.includes('session closed') || errMsg.includes('protocol error')) {
+          handleCriticalClientErrorFunc(err, originMessage);
+        }
+      }
       
       // AJUSTE 3: Verifica se os cabeçalhos já foram enviados antes de mandar uma resposta de erro
       if (!res.headersSent) {

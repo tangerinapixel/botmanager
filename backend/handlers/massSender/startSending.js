@@ -1,32 +1,89 @@
+// handlers/massSender/startSending.js (VERSÃO INTEGRAL COM CORREÇÃO DE VARIÁVEL)
+
 const fs = require('fs');
+const path = require('path');
 const delay = require('../../utils/delay');
 const enviarComOuSemImagem = require('./imageHandler');
+const { dataDir } = require('../../utils/paths');
+const CHECKPOINT_FILE = path.join(dataDir, 'progresso_massa.json');
 
-// MODIFICADO: Adicionado duracaoPausaSegundos aos parâmetros da função
+// DECLARAÇÃO DA "MEMÓRIA" DO DELAY (FORA DA FUNÇÃO PRINCIPAL)
+let ultimoDelay = -1;
+let ultimaPausaLonga = -1;
+
+// G3: Processa variações de texto no formato {{spin: opção1 | opção2 | opção3}}
+function processarSpintax(texto) {
+  return texto.replace(/\{\{spin:(.*?)\}\}/g, (_, opts) => {
+    const opcoes = opts.split('|').map(s => s.trim());
+    return opcoes[Math.floor(Math.random() * opcoes.length)];
+  });
+}
+
 function startSending({
   client,
-  contatos, // Array de objetos { numero: string, nome: string }
+  contatos,
   mensagem,
   imagePath,
   intervaloSegundos = 3,
-  pausaCada = 0, // Renomeado de pausaAposEnvios para consistência com formData, default 0 (sem pausa de bloco)
-  duracaoPausaSegundos = 0, // NOVO PARÂMETRO, default 0 (sem duração de pausa)
+  pausaCada = 0,
+  duracaoPausaSegundos = 0,
   modoAmigavel = false,
   modoEscuro = false,
   io,
-  // onPause e onStop são para controle manual externo, mantidos se sua API os usa
   onPause = () => false, 
   onStop = () => false
 }) {
-  let enviadosComSucesso = 0; // Contador de sucessos
-  let enviadosComFalha = 0;   // Contador de falhas
-  let totalProcessados = 0;   // Contador total de contatos processados (sucesso + falha)
+  let enviadosComSucesso = 0;
+  let enviadosComFalha = 0;
+  let totalProcessados = 0;
+
+
+  function salvarCheckpoint(index, total, contatos, mensagem) {
+    try {
+        const dados = { 
+            index, 
+            total, 
+            ultimoContato: contatos[index]?.numero || 'fim',
+            data: new Date().toLocaleString() 
+        };
+        fs.writeFileSync(CHECKPOINT_FILE, JSON.stringify(dados, null, 2));
+    } catch (e) {
+        console.error('[Checkpoint] Erro ao salvar arquivo:', e.message);
+    }
+}
+
+function limparCheckpoint() {
+    if (fs.existsSync(CHECKPOINT_FILE)) {
+        fs.unlinkSync(CHECKPOINT_FILE);
+        console.log('[Checkpoint] ✅ Arquivo de rastro removido (Envio Concluído).');
+    }
+}
 
   async function enviarMensagens() {
     console.log(`[ENVIO_MASSA] Iniciando envio para ${contatos.length} contatos.`);
     io.emit('massNotification', { message: `🚀 Iniciando envio para ${contatos.length} contatos...`, type: 'info' });
 
-    for (const contato of contatos) {
+    let proximoGatilhoDePausa = 0;
+    if (pausaCada > 0) {
+      const jitter = Math.floor(pausaCada * 0.2);
+      proximoGatilhoDePausa = pausaCada + Math.floor(Math.random() * (jitter * 2 + 1)) - jitter;
+    }
+
+    // =============================================================
+    // O LOOP PRINCIPAL COMEÇA AQUI
+   for (let i = 0; i < contatos.length; i++) { const contato = contatos[i];
+
+      // 🛡️ TRAVA DE SEGURANÇA CONTRA DESCONEXÃO OU DESLOGAMENTO
+      if (!client.info || !client.pupPage || client.pupPage.isClosed() || !client.pupBrowser) {
+        console.error('[ENVIO_MASSA] 🛑 CONEXÃO PERDIDA OU DESLOGADA! Salvando rastro e parando.');
+        salvarCheckpoint(i, contatos.length, contatos, mensagem);
+        io.emit('massNotification', { 
+            message: `❌ Conexão com WhatsApp caiu/deslogou no contato ${i}. Progresso de envio salvo!`, 
+            type: 'danger' 
+        });
+        return; // Sai da função imediatamente
+      }
+
       if (onStop()) {
         console.log(`[ENVIO_MASSA] 🛑 Envio interrompido manualmente (onStop).`);
         io.emit('massNotification', { message: '🛑 Envio interrompido manualmente.', type: 'warning' });
@@ -36,121 +93,191 @@ function startSending({
       while (onPause()) {
         console.log('[ENVIO_MASSA] ⏸️ Envio em pausa manual (onPause)...');
         io.emit('massNotification', { message: '⏸️ Envio em pausa manual...', type: 'info' });
-        await delay(2000); // Verifica a cada 2 segundos se saiu da pausa manual
+        await delay(2000);
       }
 
-      if (onStop()) { // Verifica novamente após possível pausa manual
+      if (onStop()) {
         console.log(`[ENVIO_MASSA] 🛑 Envio interrompido manualmente após pausa.`);
         io.emit('massNotification', { message: '🛑 Envio interrompido manualmente após pausa.', type: 'warning' });
         break;
       }
 
-      let mensagemFinal = mensagem;
-      let nomeContato = contato.nome || ''; // Garante que nomeContato seja uma string
+      // --- BLINDAGEM DE CONTEÚDO (SPINTAX) ---
+      const saudações = ["Olá", "Oi", "Tudo bem?", "Bom dia", "Opa", "E aí"];
+      const saudaçaoSorteada = saudações[Math.floor(Math.random() * saudações.length)];
+      
+      const nomeDoContato = contato.nome || ''; 
+      const mensagemVariada = processarSpintax(mensagem); // G3: aplica variações de conteúdo
+      let mensagemFinal = "";
 
-      if (modoAmigavel && nomeContato) { // Só adiciona nome se existir
-        mensagemFinal = `😊 Olá ${nomeContato}, ${mensagem}`;
-      } else if (modoEscuro) {
-        mensagemFinal = `⚠️ ATENÇÃO ${mensagem}`;
+      if (modoAmigavel && nomeDoContato) {
+          mensagemFinal = `😊 ${saudaçaoSorteada} ${nomeDoContato}, ${mensagemVariada}`;
+      } else {
+          mensagemFinal = `${saudaçaoSorteada}! ${mensagemVariada}`;
       }
 
-      console.log(`[ENVIO_MASSA] ➡️ Enviando para: ${contato.numero} | Nome: ${nomeContato} | Mensagem: ${mensagemFinal.substring(0, 30)}...`);
+      if (modoEscuro) {
+          mensagemFinal = `⚠️ ATENÇÃO: ${mensagemFinal}`;
+      }
+
+      // ✅ CORREÇÃO: Usamos nomeDoContato aqui também para evitar erro no console.log
+      console.log(`[ENVIO_MASSA] ➡️ Enviando para: ${contato.numero} | Nome: ${nomeDoContato} | Mensagem: ${mensagemFinal.substring(0, 30)}...`);
+      
       let sucessoEsteEnvio = false;
       let erroEsteEnvio = null;
 
+      // --- BLOCO DE ENVIO (TRY...CATCH) ---
+      let jid = contato.numero.includes('@') ? contato.numero : null;
+      if (!jid) {
+        const numLimpo = contato.numero.replace(/[^\d]/g, '');
+        // Se tem 15 dígitos e começa com 1, é uma LID. Caso contrário, contato comum (@c.us)
+        if (numLimpo.length === 15 && numLimpo.startsWith('1')) {
+          jid = numLimpo + '@lid';
+        } else {
+          jid = numLimpo + '@c.us';
+        }
+      }
+
+      // Validação de número existente no WhatsApp (Prevenção contra erros de 'No LID for user')
+      let cadastrado = false;
       try {
-        const chat = await client.getChatById(contato.numero + '@c.us');
-        await chat.sendStateTyping();
-        await delay(Math.max(500, Math.random() * 1500 + 500)); // Pequeno delay aleatório antes de digitar
+        cadastrado = await client.isRegisteredUser(jid);
+      } catch (errReg) {
+        console.warn(`[ENVIO_MASSA] Falha ao verificar registro para ${contato.numero}: ${errReg.message}`);
+      }
 
-        await enviarComOuSemImagem(client, contato, mensagemFinal, imagePath);
+      if (!cadastrado) {
+        console.error(`[ENVIO_MASSA] ❌ Contato ${contato.numero} não está cadastrado no WhatsApp. Pulando.`);
+        enviadosComFalha++;
+        totalProcessados++;
+        const porcentagem = contatos.length > 0 ? Math.round((totalProcessados / contatos.length) * 100) : 0;
+        io.emit('massProgress', {
+          progressoAtual: totalProcessados,
+          total: contatos.length,
+          porcentagem: porcentagem,
+          enviado: contato.numero,
+          sucesso: false,
+          erro: 'Número não cadastrado no WhatsApp (Sem conta)'
+        });
+        continue; // Pula para o próximo contato sem quebrar o fluxo nem travar o Chrome
+      }
 
+      let chat = null;
+      try {
+        chat = await client.getChatById(jid);
+      } catch (chatErr) {
+        console.warn(`[ENVIO_MASSA] ⚠️ Chat não pôde ser pré-carregado para ${contato.numero}: ${chatErr.message}`);
+      }
+
+      try {
+        if (chat) {
+          await chat.sendStateTyping();
+          
+          // G1: Delay proporcional ao tamanho real da mensagem (simula digitação humana)
+          const msDigitando = Math.min(mensagemFinal.length * 55 + Math.random() * 1500, 12000);
+          await delay(msDigitando);
+
+          // G4: Simula pausa após digitar (como humano que revisou antes de enviar)
+          await chat.clearState();
+          await delay(300 + Math.random() * 600);
+        } else {
+          // Fallback: delay simulado curto se o chat não foi pré-carregado
+          await delay(1500 + Math.random() * 1500);
+        }
+
+        await enviarComOuSemImagem(client, contato, mensagemFinal, imagePath, jid);
+        
         enviadosComSucesso++;
         sucessoEsteEnvio = true;
         console.log(`[ENVIO_MASSA] ✅ Enviado para ${contato.numero}`);
 
       } catch (err) {
-        enviadosComFalha++;
-        erroEsteEnvio = err.message;
-        console.error(`[ENVIO_MASSA] ❌ Erro ao enviar para ${contato.numero}:`, err.message);
+        if (err.message && err.message.includes("reading 'serialize'")) {
+          enviadosComSucesso++;
+          sucessoEsteEnvio = true;
+          erroEsteEnvio = null;
+          console.warn(`[ENVIO_MASSA] ✅ Workaround de 'serialize' ativado para ${contato.numero}. Mensagem enviada.`);
+        } else {
+          enviadosComFalha++;
+          sucessoEsteEnvio = false;
+          erroEsteEnvio = err.message;
+          console.error(`[ENVIO_MASSA] ❌ Erro REAL ao enviar para ${contato.numero}:`, err.message);
+        }
       }
 
+      // --- ATUALIZAÇÃO DE PROGRESSO PARA O FRONTEND ---
       totalProcessados++;
-      // MODIFICADO: Evento massProgress mais completo
+      const porcentagem = contatos.length > 0 ? Math.round((totalProcessados / contatos.length) * 100) : 0;
       io.emit('massProgress', {
-        progressoAtual: totalProcessados, // Número de contatos processados
-        total: contatos.length,          // Total de contatos na lista
-        enviado: contato.numero,         // Número para o qual foi tentado o envio
-        sucesso: sucessoEsteEnvio,       // Booleano indicando sucesso para este contato
-        erro: erroEsteEnvio              // Mensagem de erro se falhou para este contato
+        progressoAtual: totalProcessados,
+        total: contatos.length,
+        porcentagem: porcentagem,
+        enviado: contato.numero,
+        sucesso: sucessoEsteEnvio,
+        erro: erroEsteEnvio
       });
 
-      // Lógica da Pausa Automática PROGRAMADA (APÓS X MENSAGENS)
-      if (pausaCada > 0 && totalProcessados < contatos.length && totalProcessados % pausaCada === 0) {
-        if (duracaoPausaSegundos > 0) {
-          const msgPausa = `⏳ Pausa programada por ${duracaoPausaSegundos} segundos após ${totalProcessados} envios...`;
+      // --- LÓGICA DE PAUSA PROGRAMADA (G6: jitter no gatilho para evitar padrão rítmico) ---
+      if (pausaCada > 0 && totalProcessados === proximoGatilhoDePausa && totalProcessados < contatos.length && duracaoPausaSegundos > 0) {
+          const pausaMinimaSeg = duracaoPausaSegundos;
+          const pausaMaximaSeg = duracaoPausaSegundos + 30;
+          const segundosPausaAleatorios = Math.floor(Math.random() * (pausaMaximaSeg - pausaMinimaSeg + 1)) + pausaMinimaSeg;
+
+          const msgPausa = `⏳ Pausa programada por aproximadamente ${segundosPausaAleatorios}s após ${totalProcessados} envios...`;
           console.log(`[ENVIO_MASSA] ${msgPausa}`);
           io.emit('massNotification', { message: msgPausa, type: 'info' });
 
-          await delay(duracaoPausaSegundos * 1000); // Pausa pela duração configurada
+          // Calcula o próximo gatilho a partir do ponto atual
+          const jitter = Math.floor(pausaCada * 0.2);
+          const offset = Math.floor(Math.random() * (jitter * 2 + 1)) - jitter;
+          proximoGatilhoDePausa = totalProcessados + pausaCada + offset;
 
-          const msgRetomada = '▶️ Retomando envio após pausa programada.';
-          console.log(`[ENVIO_MASSA] ${msgRetomada}`);
-          io.emit('massNotification', { message: msgRetomada, type: 'info' });
-        } else {
-          console.log(`[ENVIO_MASSA] Pausa a cada ${pausaCada} envios configurada, mas duração da pausa é 0. Continuando...`);
-        }
+          await delay(segundosPausaAleatorios * 1000);
+          io.emit('massNotification', { message: '▶️ Retomando envio após pausa programada.', type: 'info' });
       }
 
-      // Delay entre mensagens individuais (APÓS a pausa programada, se houver)
-      if (totalProcessados < contatos.length) { // Não esperar após o último envio
-          await delay(intervaloSegundos * 1000);
+      // --- LÓGICA DE DELAY ALEATÓRIO INDIVIDUAL (G2: distribuição humana assétrica) ---
+      if (totalProcessados < contatos.length) {
+          const baseMs = intervaloSegundos * 1000;
+          // 85% das vezes: pausa normal com leve variação; 15%: pausa longa (simula distracção)
+          const delayEmMs = Math.random() < 0.85
+            ? baseMs + Math.random() * 8000
+            : baseMs + 15000 + Math.random() * 25000;
+
+          const segundosLog = Math.round(delayEmMs / 1000);
+          console.log(`[TIMER] ⏸️ Próximo envio em ${segundosLog}s.`);
+          await delay(delayEmMs);
       }
+      // Atualiza o rastro após cada envio processado
+      salvarCheckpoint(i + 1, contatos.length, contatos, mensagem);
+      
+    } // FIM DO LOOP FOR
 
-    } // Fim do loop for
-
+    // --- FINALIZAÇÃO ---
     const mensagemFinalStatus = `📤 Envio em massa finalizado! Sucessos: ${enviadosComSucesso}, Falhas: ${enviadosComFalha}.`;
     console.log(`[ENVIO_MASSA] ${mensagemFinalStatus}`);
-    // Emitir evento de conclusão para o frontend
     io.emit('massComplete', {
-        sucessoGeral: enviadosComFalha === 0 && enviadosComSucesso > 0, // Considera sucesso geral se não houver falhas e pelo menos um sucesso
-        enviados: enviadosComSucesso,
-        falhas: enviadosComFalha,
-        message: mensagemFinalStatus,
-        detalhes: { // Você pode popular isso com mais detalhes se necessário
-            // enviados: listaDeNumerosEnviadosComSucesso,
-            // falhas: listaDeNumerosComFalhaEMotivo
-        }
+      sucessoGeral: enviadosComFalha === 0 && enviadosComSucesso > 0,
+      enviados: enviadosComSucesso,
+      falhas: enviadosComFalha,
+      message: mensagemFinalStatus
     });
 
-    // Deleta a imagem após o envio completo
-    if (imagePath) {
-      fs.unlink(imagePath, (errUnlink) => {
-        if (errUnlink) {
-          console.error('[ENVIO_MASSA] ❌ Erro ao deletar imagem após envio:', errUnlink);
-          io.emit('massNotification', { message: `Erro ao deletar imagem: ${errUnlink.message}`, type: 'error' });
-        } else {
-          console.log('[ENVIO_MASSA] 🗑️ Imagem deletada automaticamente após o envio.');
-          io.emit('massNotification', { message: '✔️​ Envio concluido com sucesso', type: 'info' });
-        }
+    limparCheckpoint();
+
+    if (imagePath && fs.existsSync(imagePath)) {
+      fs.unlink(imagePath, (err) => {
+        if (!err) console.log('[ENVIO_MASSA] 🗑️ Imagem deletada.');
       });
     }
-  } 
+
+  } // Fim enviarMensagens
 
   enviarMensagens().catch(error => {
-    // Captura erros inesperados da função assíncrona enviarMensagens
-    console.error("[ENVIO_MASSA] Erro não esperado no processo de envio em massa:", error);
-    io.emit('massComplete', {
-        sucessoGeral: false,
-        enviados: enviadosComSucesso,
-        falhas: contatos.length - enviadosComSucesso, // Estima falhas se o processo quebrou
-        message: "Erro crítico durante o envio em massa. Verifique os logs do servidor.",
-        detalhes: {}
-    });
+    console.error("[ENVIO_MASSA] Erro crítico:", error);
+    io.emit('massComplete', { sucessoGeral: false, message: "Erro crítico no processo." });
   });
 
-  // O retorno das funções de controle manual é mantido como no seu original
-  // Essas funções onPause/onStop são passadas e modificadas externamente.
   return {
     pause: () => onPause = () => true,
     resume: () => onPause = () => false,

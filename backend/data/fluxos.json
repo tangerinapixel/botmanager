@@ -5,7 +5,9 @@
       "trigger": "Menu",
       "response": [
         "​👉​ *Siga estas 2 etapas rápidas:*\n\n✅ Salve nosso contato para receber as próximas novidades. \n✅ Escolha uma opção abaixo respondendo com o NÚMERO correspondente: \n\n1️⃣ - [1] 📖 Baixar Lição da Escola Sabatina (PDF) \n2️⃣ - [2] 📚 Saber mais sobre estudos teológicos \n3️⃣ - [3] ✍️ Confirmar minha assinatura \n4️⃣ - [4] 🗣️ Falar sobre outro assunto \n\n_Exemplo: envie \"1\" para baixar a lição_"
-      ]
+      ],
+      "imageUrl": "",
+      "matchType": "equals"
     },
     {
       "id": "1745260176542",
@@ -13,18 +15,9 @@
       "response": [
         "_✅ É muito bom saber que tem interesse no estudo da Palavra de Deus!_\n\nA lição da Escola Sabatina está disponível para baixar em nosso BLOG:\n👉 https://virtualteologico.com.br/baixar-pdf-da-licao-escola-sabatina/\nEstamos à sua inteira disposição caso tenha alguma dúvida.\n\nGraça e paz 🫶🫶\n*Não sabe como baixar? Digite [5] que eu te explico.*",
         "_ 📖 Que bênção ver seu interesse pelas Escrituras!_\n\nVocê pode acessar e baixar a lição da Escola Sabatina direto no nosso blog:\n👉 https://virtualteologico.com.br/baixar-pdf-da-licao-escola-sabatina/\n\nSe precisar de algo, estamos por aqui!\nDeus te abençoe 🌟\n*Se tiver dúvida pra baixar, é só digitar [5] que eu te mostro como fazer.*",
-        "_🙏 Que alegria ter você buscando crescer espiritualmente!_\n\nA lição da Escola Sabatina está prontinha pra baixar no nosso site:\n👉 https://virtualteologico.com.br/baixar-pdf-da-licao-escola-sabatina/\nQualquer dúvida, pode contar comigo!\n\nGraça e paz! 🤝\n*Não conseguiu baixar? Manda [5] que eu te ajudo.*"
+        "_🙏 Que alegria ter você buscando crescer espiritualmente!_\n\nA lição da Escola Sabatina está prontinha pra baixar no nosso site:\n👉 https://virtualteologico.com.br/baixar-pdf-da-licao-escola-sabatina/\nQualquer dúvida, pode contar comigo!\n\nGraça e paz! 🤝\n*Não conseguiu baixar? Manda [5] que eu te ajudo.*\n\n*ATENÇÃO*\n\nO atualização do conteúdo acontece aos sábados até por do Sol. Isso significa que a o conteúdo pode estar desatualizado.\n\nPara dúvidas: entre em contato conosco, estamos a disposição."
       ],
-      "imageUrl": "/uploads/1746757744978.jpg",
-      "matchType": "equals"
-    },
-    {
-      "id": "1745260436790",
-      "trigger": "2",
-      "response": [
-        "🌟 *Seja bem-vindo ao nosso universo teológico!* \n\n*Queremos proporcionar a você uma experiência única de estudo!* 📖.\n\n✨ Não hesite em interagir,comentar,curtir e compartilhar nosso conteúdo. 💬❤️↗️ \n\n📢 *Espalhe a Palavra de Deus* e ajude a disseminar o conhecimento verdadeiro sobre Jesus! 🙌✝️. Juntos vamos construir um espaço vibrante e inspirador para o *crescimento espiritual e intelectual*. 🌱 🎉\n\n🚀 *ACESSE* 👉https://virtualteologico.com.br/ \n\n#CompartilheABênção #JesusÉaResposta\n\n⌨️​​ Digite *MENU* para ver novamente as opções.//***"
-      ],
-      "imageUrl": "/uploads/1749461129692.png",
+      "imageUrl": "/uploads/1758997937334.jpg",
       "matchType": "equals"
     },
     {
@@ -63,9 +56,10 @@
       "id": "1746154450404",
       "trigger": "lição",
       "response": [
-        "A Lição da Escola Sabatina da próxima semana está disponível em PDF\n\n- (26 de Abril a 02 Maio 2025)\n\nNo Link você vai encontrar as seguintes lições:\n1. Adultos\n2. Jovens\n3. Adolescentes\n4. Juvenis\n5. Primários \n\nACESSE O LINK PARA BAIXAR 🔗 https://virtualteologico.com.br/baixar-pdf-da-licao-escola-sabatina/\n\n*COMPARTILHE* 🙏"
+        "A Lição da Escola Sabatina da próxima semana está disponível em PDF\n\n- (26 de Abril a 02 Maio 2025)\n\nNo Link você vai encontrar as seguintes lições:\n1. Adultos\n2. Jovens\n3. Adolescentes\n4. Juvenis\n5. Primários \n6. Jardim\n\nACESSE O LINK PARA BAIXAR 🔗 https://virtualteologico.com.br/baixar-pdf-da-licao-escola-sabatina/\n\n*COMPARTILHE* 🙏"
       ],
-      "imageUrl": "/uploads/1746154450382.png"
+      "imageUrl": "/uploads/1746154450382.png",
+      "matchType": "equals"
     },
     {
       "id": "1746379742380",
@@ -95,7 +89,7 @@
     },
     {
       "id": "1746672519900",
-      "trigger": "SIM",
+      "trigger": "SIM! desejo receber",
       "response": [
         "👏 _Que alegria saber que você quer continuar!_\nFico muito feliz por ter você nessa caminhada espiritual comigo! 🙏📘\n\n📩 A partir de agora, você continuará recebendo o *Comentário da Lição* toda semana, com reflexões bíblicas profundas, aplicações práticas e textos fáceis de entender!\n\n✨ E tem mais! Você também pode entrar no nosso grupo exclusivo no WhatsApp chamado Lição Fácil – lá a gente compartilha estudos, perguntas e testemunhos lindos!\n\n🔗 _Clique aqui para participar agora mesmo:_\n👉 https://chat.whatsapp.com/KEjQyD8IzqZDY2odhKxwBr\n\nDeus te abençoe e que a Palavra continue sendo viva e eficaz na sua vida! 📖🔥\nConte comigo! 💬"
       ],
@@ -106,7 +100,7 @@
       "id": "1746795516241",
       "trigger": "Obrigado",
       "response": [
-        "🙏 Que bom que pôde aproveitar! Fico feliz em ajudar.\n💡 Aproveita e confere também os conteúdos no nosso blog e os PDFs atualizados da lição da Escola Sabatina e o *Comentário Pratico da Lição:*\n\n➡️ Blog com temas diversos: virtualteologico.com.br\n📘 Lição da Escola Sabatina: virtualteologico.com.br/baixar-pdf-da-licao-escola-sabatina\n📝 Comentário devocional: virtualteologico.com.br/comentario-da-licao-da-escola-sabatina-em-pdf\n\n_Estou a disposição, se precisar é so chamar._\nDeus te abençoe! ✔️​"
+        "🙏 Que bom que pôde aproveitar! Fico feliz em ajudar.\n💡 Já confere também os conteúdos no nosso blog e os PDFs atualizados da lição da Escola Sabatina e o *Comentário Pratico da Lição:*\n\n➡️ Blog com temas diversos: virtualteologico.com.br\n📘 Lição da Escola Sabatina: virtualteologico.com.br/baixar-pdf-da-licao-escola-sabatina\n📝 Comentário devocional: virtualteologico.com.br/comentario-da-licao-da-escola-sabatina-em-pdf\n\n_Estou a disposição, se precisar é so chamar._\nDeus te abençoe! ✔️​"
       ],
       "imageUrl": "",
       "matchType": "includes"
@@ -186,12 +180,12 @@
     },
     {
       "id": "1747511512658",
-      "trigger": "Olá Virtual Teológico, tudo bem?",
+      "trigger": "Virtual Teológico",
       "response": [
         "Olá {{nome}}, fico muito feliz que você chegou aqui! 😊🙏\n\nQueremos dar a você a devida atenção ❤️\ne para facilitar nossa comunicação, siga estas 2 etapas rápidas:\n\n✅ Salve nosso contato para receber as próximas novidades.\n✅ Escolha uma opção abaixo respondendo com o NÚMERO correspondente:\n\n1️⃣ - [1] 📖 Baixar Lição da Escola Sabatina (PDF)\n2️⃣ - [2] 📚 Saber mais sobre estudos teológicos\n3️⃣ - [3] ✍️ Confirmar minha assinatura\n4️⃣ - [4] 🗣️ Falar sobre outro assunto\n\n_Exemplo: envie \"1\" para baixar a lição_"
       ],
       "imageUrl": "",
-      "matchType": "equals"
+      "matchType": "includes"
     },
     {
       "id": "1747513435340",
@@ -223,24 +217,6 @@
       "matchType": "equals"
     },
     {
-      "id": "1749064503839",
-      "trigger": "Amem",
-      "response": [
-        "🙏 Que bom que pôde usufruir! Fico feliz em ajudar.\n💡 Aproveita e confere também os conteúdos no nosso blog e os PDFs atualizados da lição da Escola Sabatina e o *Comentário Pratico da Lição:*\n\n➡️ Blog com temas diversos: virtualteologico.com.br\n📘 Lição da Escola Sabatina: virtualteologico.com.br/baixar-pdf-da-licao-escola-sabatina\n📝 Comentário devocional: virtualteologico.com.br/comentario-da-licao-da-escola-sabatina-em-pdf/\n\n_Estou a disposição, se precisar é so chamar._\nDeus te abençoe! ✔️​"
-      ],
-      "imageUrl": "",
-      "matchType": "includes"
-    },
-    {
-      "id": "1749078421213",
-      "trigger": "Amém",
-      "response": [
-        "🙏 Que bom que pôde usufruir! Fico feliz em ajudar.\n💡 Aproveita e confere também os conteúdos no nosso blog e os PDFs atualizados da lição da Escola Sabatina e o *Comentário Pratico da Lição:*\n\n➡️ Blog com temas diversos: virtualteologico.com.br\n📘 Lição da Escola Sabatina: virtualteologico.com.br/baixar-pdf-da-licao-escola-sabatina\n📝 Comentário devocional: virtualteologico.com.br/comentario-da-licao-da-escola-sabatina-em-pdf\n\n_Estou a disposição, se precisar é so chamar._\nDeus te abençoe! ✔️​"
-      ],
-      "imageUrl": "",
-      "matchType": "equals"
-    },
-    {
       "id": "1749402737102",
       "trigger": "OK",
       "response": [
@@ -250,31 +226,114 @@
       "matchType": "equals"
     },
     {
-      "trigger": "vaca",
+      "trigger": "Feliz semana",
       "response": [
-        "Avaca é boi femea////"
+        "Obrigado(a)! Feliz semana pra você também! 😊",
+        "Que a sua semana seja incrível!",
+        "Muito obrigado(a)! Desejo uma semana abençoada!"
       ],
-      "imageUrl": "/uploads/1749434705899.png",
+      "imageUrl": "",
       "matchType": "includes",
-      "id": "1749434687116"
+      "id": "1752374203499"
     },
     {
-      "trigger": "coco",
+      "trigger": "Lição da escola sabatina",
       "response": [
-        "Coco tem na Bhaia e em em Maceíó. Bom demais...."
+        "🟣​ Você encontra a Lição da Escola Sabatina desta semana em PDF aqui.\n\nNo Link você vai encontrar as seguintes lições:\n1. Adultos\n2. Jovens\n3. Adolescentes\n4. Juvenis\n5. Primários \n6. Jardim\n\nACESSE O LINK PARA BAIXAR 🔗 https://virtualteologico.com.br/baixar-pdf-da-licao-escola-sabatina/\n\n*COMPARTILHE* 🙏"
       ],
-      "imageUrl": "/uploads/1749463857133.png",
+      "imageUrl": "",
       "matchType": "equals",
-      "id": "1749463857139"
+      "id": "1752424074696"
     },
     {
-      "trigger": "teste",
+      "trigger": "assinatura",
       "response": [
-        "//TAG DE ROTORNO: //\n👇 Faça isso:\ngit checkout \"coloque aqui a versão da tag sem as aspas\"\n\nE se quiser continuar o trabalho normal depois (voltar para o presente): \n👇 Faça isso:\ngit checkout main\n\nSe você quer descartar as alterações locais e voltar para o estado limpo do master:\n👇 Faça isso:\ngit reset --hard\ngit checkout master\n\n\n E se quiser continuar o trabalho a partir dessa tag?\n👇 Faça isso:\ngit checkout -b nova-rama-v1.5\n\nvoltar pro presente:\n👇 Faça isso: \ngit checkout main\n\nCHAVE DE API DE LICENÇAS:"
+        "🟣​ *Seja bem vindo(a) a nossa lista! 🙌​*\n\nVocê encontra a Lição da Escola Sabatina desta semana em PDF aqui. Vamos enviar para você toda semana as sábados até o por do Sol.\n\nNo Link você vai encontrar as seguintes lições:\n1. Adultos\n2. Jovens\n3. Adolescentes\n4. Juvenis\n5. Primários \n\nACESSE O LINK PARA BAIXAR 🔗 https://virtualteologico.com.br/baixar-pdf-da-licao-escola-sabatina/\n\n_Se desejar não receber mais esse material digite *SAIR* e vamos remover seu número da lista de envios._\n\n*COMPARTILHE COM OS AMIGOS* 🙏"
       ],
-      "imageUrl": "/uploads/1749679834236.png",
+      "imageUrl": "",
+      "matchType": "includes",
+      "id": "1752425925034"
+    },
+    {
+      "trigger": "comentário",
+      "response": [
+        "🔵​ Seja bem vindo(a)! Que bom que deseja usufruir do nosso material! Fico feliz em ajudar.\n\n💡 Você vai receber o comentário entre quinta e sexta feira de toda a semana\n\n➡️ Confira o material no link abaixo\n\n📝 Comentário devocional: virtualteologico.com.br/comentario-da-licao-da-escola-sabatina-em-pdf\n\n_Estou a disposição, se precisar é só chamar._\n*Que graça de Jesus esteja com você.* ✔️"
+      ],
+      "imageUrl": "",
+      "matchType": "includes",
+      "id": "1752504855412"
+    },
+    {
+      "trigger": "2",
+      "response": [
+        "🌟 *Seja bem-vindo ao nosso universo teológico!* \n\n*Queremos proporcionar a você uma experiência única de estudo!* 📖.\n\n✨ Não hesite em interagir,comentar,curtir e compartilhar nosso conteúdo. 💬❤️↗️ \n\n📢 *Espalhe a Palavra de Deus* e ajude a disseminar o conhecimento verdadeiro sobre Jesus! 🙌✝️. Juntos vamos construir um espaço vibrante e inspirador para o *crescimento espiritual e intelectual*. 🌱 🎉\n\n🚀 *ACESSE* 👉https://virtualteologico.com.br/ \n\n#CompartilheABênção #JesusÉaResposta\n\n⌨️​​ Digite *MENU* para ver novamente as opções."
+      ],
+      "imageUrl": "/uploads/1752888623274.png",
       "matchType": "equals",
-      "id": "1749679834245"
+      "id": "1752888623293"
+    },
+    {
+      "trigger": "Sim! Eu desejo receber",
+      "response": [
+        "🔵​ Seja bem vindo(a)! Que bom que deseja usufruir do nosso material! Fico feliz em ajudar.\n\n💡 Voce vai receber o comentário entre quinta e sexta feira de toda a semana\n\n➡️ Confira o material no link abaixo\n\n📝 Comentário devocional: virtualteologico.com.br/comentario-da-licao-da-escola-sabatina-em-pdf\n\n_Estou a disposição, se precisar é so chamar._\n*Que graça de Jesus esteja com você.* ✔️"
+      ],
+      "imageUrl": "",
+      "matchType": "equals",
+      "id": "1752892861611"
+    },
+    {
+      "trigger": "SAIR",
+      "response": [
+        "🙏 Muito obrigado pela sinceridade e por ter caminhado conosco até aqui.\nRespeito totalmente sua decisão de não continuar recebendo os envios da lição comentada.\n\nAs sementes plantadas na mente e no coração não são esquecidas por Deus. Se em algum momento quiser voltar a receber os materiais, estarei por aqui, de braços abertos! 🤝\n\nQue o Senhor continue te guiando com sabedoria, paz e luz em cada passo da tua jornada espiritual. 🙌📖\n\nUm forte abraço,"
+      ],
+      "imageUrl": "",
+      "matchType": "equals",
+      "id": "1753409192629"
+    },
+    {
+      "trigger": "Sair",
+      "response": [
+        "🙏 Muito obrigado pela sinceridade e por ter caminhado conosco até aqui.\nRespeito totalmente sua decisão de não continuar recebendo os envios da lição .comentada...\n\nAs sementes plantadas na mente e no coração não são esquecidas por Deus. Se em algum momento quiser voltar a receber os materiais, estarei por aqui, de braços abertos! 🤝\n\nQue o Senhor continue te guiando com sabedoria, paz e luz em cada passo da tua jornada espiritual. 🙌📖\n\nUm forte abraço,"
+      ],
+      "imageUrl": "",
+      "matchType": "equals",
+      "id": "1753409201801"
+    },
+    {
+      "trigger": "resumo da lição",
+      "response": [
+        "🔵​ Seja bem vindo(a)! Que bom que deseja usufruir do nosso material! Fico feliz em ajudar.\n\n💡 Voce vai receber o comentário entre quinta e sexta feira de toda a semana\n\n➡️ Confira o material no link abaixo\n\n📝 Comentário devocional: virtualteologico.com.br/comentario-da-licao-da-escola-sabatina-em-pdf\n\n_Estou a disposição, se precisar é só chamar._\n*Que graça de Jesus esteja com você.* ✔️"
+      ],
+      "imageUrl": "",
+      "matchType": "equals",
+      "id": "1754146499144"
+    },
+    {
+      "trigger": "resumo",
+      "response": [
+        "🔵​ Seja bem vindo(a)! Que bom que deseja usufruir do nosso material! Fico feliz em ajudar.\n\n💡 Você vai receber o comentário entre quinta e sexta feira de toda a semana. Além dos comentários diários da lição, nele você encontrara também o resumo de toda a lição da semana. Tenho certeza que vai gostar! \n\n➡️ Confira o material no link abaixo\n\n📝 Comentário devocional: virtualteologico.com.br/comentario-da-licao-da-escola-sabatina-em-pdf\n\n_Estou a disposição, se precisar é só chamar._\n*Que graça de Jesus esteja com você.* ✔️"
+      ],
+      "imageUrl": "",
+      "matchType": "includes",
+      "id": "1754363088158"
+    },
+    {
+      "trigger": "assinar",
+      "response": [
+        "🔵​ Seja bem vindo(a)! Que bom que deseja usufruir do nosso material! Fico feliz em ajudar.\n\n💡 Você vai receber o comentário entre quinta e sexta feira de toda a semana\n\n➡️ Confira o material no link abaixo\n\n📝 Comentário devocional: virtualteologico.com.br/comentario-da-licao-da-escola-sabatina-em-pdf\n\n_Estou a disposição, se precisar é só chamar._\n*Que graça de Jesus esteja com você.* ✔️"
+      ],
+      "imageUrl": "",
+      "matchType": "includes",
+      "id": "1754759663661"
+    },
+    {
+      "trigger": "eu quero",
+      "response": [
+        "https://chat.whatsapp.com/HEJo7a6mrHkL7XBuhccPkW"
+      ],
+      "imageUrl": "",
+      "matchType": "includes",
+      "id": "1774814868083"
     }
   ]
 }

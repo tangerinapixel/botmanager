@@ -1,6 +1,6 @@
 import React from 'react';
 
-function CardSection({ icon = "💬", title, children }) {
+function CardSection({ icon = null, title, children }) {
   return (
     <div
       style={{

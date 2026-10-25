@@ -1,7 +1,7 @@
 const fs = require('fs');
-const path = require('path');
+const { getDataFilePath } = require('../utils/paths');
 
-const RESPONDIDAS_FILE = path.join(__dirname, '../data', 'respondidas.json');
+const RESPONDIDAS_FILE = getDataFilePath('respondidas.json');
 
 if (!fs.existsSync(RESPONDIDAS_FILE)) {
   fs.writeFileSync(RESPONDIDAS_FILE, JSON.stringify({ historico: [] }, null, 2));
@@ -19,9 +19,21 @@ function jaRespondeuRecentemente(remetente, trigger, tempoExpiracaoMs) {
   const historico = loadRespondidas();
   const chave = `${remetente}-${trigger}`;
   const item = historico.find(entry => entry.chave === chave);
-  if (!item) return false;
-  return (Date.now() - item.timestamp) < tempoExpiracaoMs;
+
+  if (!item) {
+    console.log(`[🟢] Nenhum histórico encontrado para chave: ${chave}`);
+    return false;
+  }
+
+  const expirado = (Date.now() - item.timestamp) > tempoExpiracaoMs;
+
+  console.log(`[🕒] Checando histórico: ${chave}`);
+  console.log(`       ⏱️ Tempo agora: ${Date.now()} | Último: ${item.timestamp}`);
+  console.log(`       🔄 Expirado? ${expirado ? 'SIM' : 'NÃO'} (Tempo limite: ${tempoExpiracaoMs}ms)`);
+
+  return !expirado;
 }
+
 
 function registrarResposta(remetente, trigger) {
   const historico = loadRespondidas();

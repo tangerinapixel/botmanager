@@ -1,24 +1,72 @@
 {
   "name": "seu-whatsapp-bot",
-  "version": "1.0.0",
+  "version": "2.1.6",
   "description": "Bot WhatsApp com interface Electron",
   "main": "electron.js",
   "scripts": {
     "start:web": "concurrently \"npm run server\" \"npm run client\"",
     "server": "nodemon backend/bot.js",
     "client": "npm start --prefix frontend",
-    "electron:dev": "electron .",
+    "electron:dev": "electron.cmd .",
     "build:frontend": "npm run build --prefix frontend",
-    "electron:package": "npm run build:frontend && electron-builder"
+    "electron:package": "npm run build:frontend && electron-builder",
+    "dist": "npm run build:frontend && electron-builder --win"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
-    "electron": "^36.4.0"
+    "electron": "^36.4.0",
+    "electron-builder": "^26.15.3"
   },
   "dependencies": {
     "axios": "^1.8.4",
+    "electron-is-dev": "^3.0.1",
     "electron-store": "^8.2.0"
   },
-  "author": "",
-  "license": "ISC"
+  "author": "Virtual Teológico",
+  "license": "ISC",
+  "build": {
+    "appId": "com.virtualteologico.bot",
+    "productName": "Bot Manager X",
+    "copyright": "Copyright © 2026 Bot Manager X",
+    "extraResources": [
+      "backend/**",
+      "!backend/.wwebjs_auth/**",
+      "!backend/.wwebjs_cache/**",
+      "!backend/sessions/**",
+      "!backend/uploads/**",
+      "!backend/logs/**",
+      "!backend/queue_state*.json",
+      "!backend/queue_state*.json.tmp",
+      "!backend/node_modules/.cache/**",
+      "!backend/node_modules/nodemon/**",
+      "!backend/node_modules/.bin/**",
+      "!backend/**/*.log",
+      "!backend/**/*.txt",
+      "frontend/build/**"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "package.json",
+      "electron.js",
+      "preload.js",
+      "assets/**/*",
+      "preloader/**/*",
+      "!backend",
+      "!backend/**"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Bot Manager X",
+      "uninstallDisplayName": "Bot Manager X"
+    }
+  }
 }

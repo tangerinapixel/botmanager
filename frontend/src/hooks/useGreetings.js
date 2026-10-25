@@ -11,7 +11,7 @@ export function useGreetings() {
     useEffect(() => {
         const fetchGreetings = async () => {
             try {
-                const response = await fetch('http://localhost:5001/api/greetings');
+                const response = await fetch('http://localhost:5005/api/greetings');
                 if (!response.ok) throw new Error('Falha ao carregar saudações.');
                 const greetingsData = await response.json();
                 setGreetings(greetingsData);
@@ -27,7 +27,7 @@ export function useGreetings() {
     // 2. addGreeting (com a lógica de backend)
     const addGreeting = useCallback(async (greeting) => {
         try {
-            const response = await fetch('http://localhost:5001/api/greetings', {
+            const response = await fetch('http://localhost:5005/api/greetings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: greeting.message }),
@@ -39,29 +39,29 @@ export function useGreetings() {
                 if (exists) return prev.map(g => g.id === newGreetingSaved.id ? newGreetingSaved : g);
                 return [...prev, newGreetingSaved];
             });
-            notify('✅ Saudação adicionada!', 'success');
+            notify('Saudação adicionada!', 'success');
         } catch (err) {
             console.error("Erro ao salvar saudação:", err);
-            notify('❌ Erro ao salvar saudação.', 'error');
+            notify('Erro ao salvar saudação.', 'error');
         }
     }, [notify]);
 
     // 3. deleteGreeting (com a lógica de backend)
     const deleteGreeting = useCallback(async (id) => {
         try {
-            await fetch(`http://localhost:5001/api/greetings/${id}`, { method: 'DELETE' });
+            await fetch(`http://localhost:5005/api/greetings/${id}`, { method: 'DELETE' });
             setGreetings((prev) => prev.filter((g) => g.id !== id));
-            notify('🗑️ Saudação removida!', 'success');
+            notify('Saudação removida!', 'success');
         } catch (err) {
             console.error("Erro ao deletar saudação:", err);
-            notify('❌ Erro ao deletar saudação.', 'error');
+            notify('Erro ao deletar saudação.', 'error');
         }
     }, [notify]);
 
     // 4. editGreeting (com a lógica de backend - *IMPORTANTE: Você precisará implementar a rota PUT no backend*)
     const editGreeting = useCallback(async (id, newMessage) => {
         try {
-            const response = await fetch(`http://localhost:5001/api/greetings/${id}`, {
+            const response = await fetch(`http://localhost:5005/api/greetings/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: newMessage }),
@@ -77,10 +77,10 @@ export function useGreetings() {
 
             // Caso contrário, atualiza localmente com a nova mensagem
             setGreetings((prev) => prev.map((g) => (g.id === id ? { ...g, message: newMessage } : g)));
-            notify('✅ Saudação atualizada!', 'success');
+            notify('Saudação atualizada!', 'success');
         } catch (err) {
             console.error("Erro ao editar saudação:", err);
-            notify('❌ Erro ao atualizar saudação.', 'error');
+            notify('Erro ao atualizar saudação.', 'error');
         }
     }, [notify]);
 
@@ -88,7 +88,7 @@ export function useGreetings() {
     const toggleSaudacaoAtiva = useCallback(async (novoStatus) => {
     try {
         // VERIFIQUE ESTA URL E MÉTODO!
-        const res = await fetch("http://localhost:5001/api/saudacao-ativa", {
+        const res = await fetch("http://localhost:5005/api/saudacao-ativa", {
             method: "POST",
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ativo: novoStatus })
@@ -112,7 +112,7 @@ export function useGreetings() {
     useEffect(() => {
         const fetchSaudacaoAtivaStatus = async () => {
             try {
-                const response = await fetch('http://localhost:5001/api/data'); // ou uma rota específica para status da saudação
+                const response = await fetch('http://localhost:5005/api/data'); // ou uma rota específica para status da saudação
                 if (!response.ok) throw new Error('Falha ao carregar status da saudação.');
                 const data = await response.json();
                 if (typeof data.saudacaoAtiva === 'boolean') {

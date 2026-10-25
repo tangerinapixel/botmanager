@@ -1,10 +1,17 @@
 const fs = require('fs');
-const path = require('path');
+const { getDataFilePath } = require('../utils/paths');
 
-const DATA_FILE = path.join(__dirname, '../data', 'fluxos.json');
+const DATA_FILE = getDataFilePath('fluxos.json');
 
 function loadFlows() {
-  return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')).flows;
+  try {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    if (Array.isArray(data)) return data;
+    return data && Array.isArray(data.flows) ? data.flows : [];
+  } catch (error) {
+    console.error('[Config] Erro ao carregar ou parsear fluxos.json:', error);
+    return [];
+  }
 }
 
 function saveFlows(flows) {
@@ -15,7 +22,14 @@ function matchFluxo(fluxo, mensagem) {
   const gatilho = fluxo.trigger.toLowerCase();
   const recebido = mensagem.toLowerCase();
   const tipo = fluxo.matchType || 'equals';
-  return tipo === 'equals' ? recebido === gatilho : recebido.includes(gatilho);
+  
+  const resultado = tipo === 'equals'
+  ? recebido === gatilho
+  : gatilho.includes(recebido) || recebido.includes(gatilho);
+  
+  console.log(`[MATCH] tipo: ${tipo}, gatilho: "${gatilho}", recebido: "${recebido}", bateu: ${resultado}`);
+  
+  return resultado;
 }
 
 module.exports = {

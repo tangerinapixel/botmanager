@@ -14,7 +14,7 @@ function Footer() {
       }}
     >
       {/*<h3 style={{ margin: '0', fontSize: '18px', fontWeight: 'bold' }}>
-        👁️‍🗨️ Bot Menager X
+        Bot Menager X
       </h3>*/}
 
       <p style={{ fontSize: '12px', margin: '8px 0 4px', color: '#555' }}>

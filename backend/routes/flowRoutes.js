@@ -1,9 +1,9 @@
 const express = require('express');
 const fs = require('fs');
-const path = require('path');
+const { getDataFilePath } = require('../utils/paths');
 
 const router = express.Router();
-const fluxoPath = path.join(__dirname, '../data/fluxos.json');
+const fluxoPath = getDataFilePath('fluxos.json');
 
 // 📖 GET: Ler os fluxos
 router.get('/', (req, res) => {

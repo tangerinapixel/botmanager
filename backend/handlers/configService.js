@@ -1,36 +1,47 @@
-// backend/handlers/configService.js
+// backend/handlers/configService.js (VERSÃO FINAL E COMPLETA)
 
 const fs = require('fs');
-const path = require('path');
+const { getDataFilePath } = require('../utils/paths');
 
-// Define o caminho para o arquivo de forma segura
-const configFilePath = path.join(__dirname, '..', '..', 'data', 'config.json');
-
-// Garante que o diretório de dados exista
-const dataDir = path.dirname(configFilePath);
-if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-}
+// --- Bloco para config.json ---
+const configFilePath = getDataFilePath('config.json');
 
 const defaultConfig = {
   tempoExpiracaoMinutos: 3
 };
 
+// --- Bloco para ia_context.json (NOVO) ---
+const IA_CONTEXT_PATH = getDataFilePath('ia_context.json');
+
+const defaultIAContext = {
+  "nomeBot": "Assistente Virtual",
+  "nomeEmpresa": "Sua Empresa",
+  "tipoNegocio": "atendimento ao cliente",
+  "tomDeVoz": "amigável e prestativo",
+  "informacoes": {
+    "horarioAtendimento": "Segunda a Sexta, das 9h às 18h.",
+    "endereco": "Não informado",
+    "pagamento": "Não informado",
+    "produtos": "Nenhum produto cadastrado.",
+    "contatoHumano": "Não informado",
+    "site": "Não informado",
+    "gruposWhatsapp": [],
+    "principaisTopicos": ["atendimento", "suporte"]
+  }
+};
+
+// --- Funções para config.json ---
 function loadConfig() {
   try {
-    // Se o arquivo não existe, cria um com valores padrão e o retorna
     if (!fs.existsSync(configFilePath)) {
-        fs.writeFileSync(configFilePath, JSON.stringify(defaultConfig, null, 2));
-        console.log('[Config Service] Arquivo config.json não encontrado, um novo foi criado com valores padrão.');
-        return defaultConfig;
+      fs.writeFileSync(configFilePath, JSON.stringify(defaultConfig, null, 2));
+      console.log('[Config Service] Arquivo config.json não encontrado, um novo foi criado com valores padrão.');
+      return defaultConfig;
     }
-    // Se existe, lê o arquivo
     const data = fs.readFileSync(configFilePath, 'utf-8');
-    // Retorna o conteúdo do arquivo mesclado com o padrão (para garantir que todas as chaves existam)
     return { ...defaultConfig, ...JSON.parse(data) };
   } catch (error) {
     console.error(`[Config Service] Erro ao carregar config.json: ${error.message}. Usando configuração padrão.`);
-    // Em caso de erro de leitura ou parse, retorna o padrão para não quebrar a aplicação
     return defaultConfig;
   }
 }
@@ -42,9 +53,36 @@ function saveConfig(config) {
     console.log('[Config Service] ✅ Configuração salva com sucesso em:', configFilePath);
   } catch (error) {
     console.error(`[Config Service] ❌ ERRO CRÍTICO AO SALVAR CONFIG.JSON:`, error);
-    // A LINHA MAIS IMPORTANTE: Avisa quem chamou a função que deu erro!
     throw new Error('Falha ao escrever no arquivo de configuração.');
   }
 }
 
-module.exports = { loadConfig, saveConfig };
+// --- Funções para ia_context.json (NOVAS) ---
+function loadConfigIA() {
+  try {
+    if (!fs.existsSync(IA_CONTEXT_PATH)) {
+      fs.writeFileSync(IA_CONTEXT_PATH, JSON.stringify(defaultIAContext, null, 2));
+      console.log('[Config Service] Arquivo ia_context.json não encontrado, um novo foi criado com valores padrão.');
+      return defaultIAContext;
+    }
+    const data = fs.readFileSync(IA_CONTEXT_PATH, 'utf-8');
+    return { ...defaultIAContext, ...JSON.parse(data) };
+  } catch (error) {
+    console.error(`[Config Service] Erro ao carregar ia_context.json: ${error.message}. Usando configuração padrão.`);
+    return defaultIAContext;
+  }
+}
+
+function saveConfigIA(config) {
+  try {
+    const dataString = JSON.stringify(config, null, 2);
+    fs.writeFileSync(IA_CONTEXT_PATH, dataString, 'utf8');
+    console.log('[Config Service] ✅ Configuração da IA salva com sucesso em:', IA_CONTEXT_PATH);
+  } catch (error) {
+    console.error(`[Config Service] ❌ ERRO CRÍTICO AO SALVAR IA_CONTEXT.JSON:`, error);
+    throw new Error('Falha ao escrever no arquivo de configuração da IA.');
+  }
+}
+
+// --- Exportações ---
+module.exports = { loadConfig, saveConfig, loadConfigIA, saveConfigIA };

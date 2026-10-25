@@ -23,8 +23,18 @@ __tests__/
 # Ignora logs
 logs/
 *.log
+*-stdout.txt
+*-stderr.txt
 
 # Ignora builds ou dist
 #build/
-#dist/
-#out/
+dist/
+out/
+
+# Sessões e temporários do WhatsApp / Puppeteer / Electron
+backend/sessions/
+temp_user_data/
+*.backp
+
+# Dados de conversas de contatos (privacidade)
+backend/data/conversations/

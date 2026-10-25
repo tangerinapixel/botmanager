@@ -1,3 +1,6 @@
 {
-  "tempoExpiracaoMinutos": 15
+  "tempoExpiracaoMinutos": 1,
+  "saudacaoAtiva": false,
+  "respostasAtivas": false,
+  "iaAtiva": true
 }

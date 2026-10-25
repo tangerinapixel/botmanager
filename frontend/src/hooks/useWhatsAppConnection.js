@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { socket } from '../services/socket';
+import socket from '../socket/socket';
 
 export function useWhatsAppConnection() {
   // 1. O estado inicial agora é 'loading'. Isso indica que estamos buscando o status real
