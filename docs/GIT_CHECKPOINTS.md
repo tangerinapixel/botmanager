@@ -6,46 +6,44 @@ Este documento contém o registro dos checkpoints, branches e histórico de vers
 
 ## 1. Informações do Checkpoint Atual
 
-* **Hash do Commit:** `f312b2e`
-* **Data do Commit:** 25 de Outubro de 2026, 14:37:03 (-03:00)
+* **Hash do Commit:** `9ab941d`
+* **Data do Commit:** 25 de Outubro de 2026, 18:10:05 (-03:00)
 * **Autor:** Roni Moreira <roni@virtualteologico.com.br>
 * **Branch Ativa:** `ponto-estavel`
-* **Mensagem:** `fix(livechat): blindagem de edge cases em grupos, remocao de race condition e novo loader dinamico`
+* **Mensagem:** `fix(etiquetas): consistencia estrita de contatos exportaveis e cofre ultra-leve lidPhoneStore`
 * **Status:** Árvore de trabalho limpa (`working tree clean`), todas as alterações consolidadas.
 
 ---
 
 ## 2. Resumo das Alterações Consolidadas neste Checkpoint
 
-### a) Blindagem de Grupos e Comunidades (Edge Cases)
-1. **Exposição de Flags de Comunidade:**
-   - Em `backend/utils/wwebjsPatcher.js`, implementada a exposição segura de `isParentGroup`, `groupType`, `isCommunity` e `isCommunityAnnouncementGroup` nos DTOs de `window.WWebJS.getChatModel` e `window.WWebJS.getChats`.
-   - Na criação de objetos via `ChatFactory.create`, as propriedades são preservadas diretamente na instância do Chat (evitando que o método `_patch` interno da biblioteca descarte os atributos).
-2. **Higienização de Contêineres-Pai e Grupos Órfãos:**
-   - Em `backend/services/liveChatService.js`, descarte estrito de contêineres-pai de comunidade (`isParentGroup === true` ou `groupType === 'COMMUNITY'`), que não são salas de conversas reais.
-   - Descarte de grupos órfãos de chamadas/notificações com nome genérico (`"Grupo"` e `isReadOnly === true`), reduzindo a lista de grupos para apenas os grupos válidos e salas de avisos ativas.
+### a) Consistência Estrita entre Popup Modal `(N)` e Planilha Excel (`.xlsx`)
+1. **Regra Unificada de Resolução em Lote:**
+   - Em `backend/routes/listarEtiquetasComTotal.js` e `backend/routes/exportarEtiquetas.js`, unificação da cadeia de resolução de números de telefone reais:
+     `c.us direto` ➔ `WAWebApiContact.getPhoneNumber(widObj)` ➔ `contact.phoneNumber` ➔ `chat.contact.phoneNumber` ➔ cofre `lidPhoneStore`.
+2. **Contabilidade e Exportação Idênticas (100% Paridade):**
+   - O contador do modal `(N)` agora computa **apenas contatos individuais únicos que possuem telefone exportável válido**, descartando contatos `@lid` anônimos/órfãos que não possuem número associado no WhatsApp.
+   - A rota de exportação gera a planilha `.xlsx` com deduplicação rigorosa por número limpo (`replace(/\D/g, '')`), assegurando que o número exibido no modal e a quantidade de linhas na planilha batam com 100% de precisão (validado na Etiqueta 19 com 14 contatos e na Etiqueta 25 com 406 contatos em ambas as rotas).
 
-### b) Eliminação de Race Condition no Frontend
-1. **Trava de Concorrência Assíncrona:**
-   - Em `frontend/src/hooks/useLiveChat.js`, implementada referência sincronizada `activeJidRef.current = jid`.
-   - Na troca de conversas (`selectChat`), limpeza atômica imediata das mensagens anteriores (`setMessages([])`) quando o novo contato não está no cache, evitando sobreposição de conteúdo visual.
-   - Na chegada de dados assíncronos (`fetchMessagesForJid`), validação estrita de `if (activeJidRef.current === jid)` antes de aplicar `setMessages`, impedindo que respostas concorrentes sobrescrevam a tela do chat ativo.
-   - Proteção de cache em memória (`messagesCacheByJid`): apenas arrays com mensagens reais (`length > 0`) são armazenados, prevenindo o bloqueio permanente de contatos.
+### b) Cofre Local Ultra-Leve (`lidPhoneStore.js`)
+1. **Operação 100% em RAM (`Map`) e Zero Bloat:**
+   - Implementado singleton em `backend/utils/lidPhoneStore.js` armazenando mapeamentos em memória RAM para leituras síncronas $O(1)$ sem I/O de disco.
+   - Formato minificado em tupla JSON `{"<LID>@lid":["<TELEFONE>","<NOME>"]}` no arquivo `backend/data/lid-phone-map.json` (11.174 registros ocupando apenas 456 KB em disco).
+2. **Persistência Assíncrona e Proteção de I/O:**
+   - Gravação em disco via `fs.promises.writeFile` com debounce longo (25s) e flag atômica `isDirty`, evitando concorrência ou impacto de CPU/disco em alto tráfego.
+3. **Indexação Inteligente e Hidratação:**
+   - Hidratação instantânea via Puppeteer no evento `ready` do WhatsApp Web a partir de `WAWebApiContact.lidPnCache`.
+   - Extrator regex com validação de formato e contexto (`extractPhoneFromText`) para capturar números digitados por clientes em mensagens recebidas (`backend/services/whatsappClientManager.js`).
 
-### c) Novo Loader Dinâmico e Feedback Visual de Mensagens
-1. **Spinner com Halo Gradiente e Pulso:**
-   - Em `frontend/src/components/LiveChat/ChatMessageArea.jsx` e `frontend/src/components/LiveChat/LiveChat.css`, substituição do texto estático *"Carregando histórico de mensagens..."* por um loader visual moderno.
-   - Anel externo com halo gradiente neon (`#38bdf8` ➔ `#6366f1`) acelerado por GPU (`@keyframes liveChatSpin`).
-   - Ícone central `MessageSquare` com animação de pulso e brilho (`@keyframes liveChatPulse`).
-   - Rótulo *"Carregando mensagens"* acompanhado de micro-animação de onda nos 3 pontos (`@keyframes liveChatDotWave`).
-   - Transição suave de entrada com *fade-in*.
-2. **Feedback Visual de Estado Vazio:**
-   - Exibição de card limpo e amigável quando `messages.length === 0` (diferenciando grupos de conversas privadas) para que o operador saiba que não há mensagens recentes em vez de ver uma tela em branco.
+### c) Correção de Roteamento SPA (`backend/bot.js`)
+1. **Bypass da Rota de Download:**
+   - Adicionada exceção explícita na linha 92 do `backend/bot.js` para requisições iniciadas com `/exportar-`, impedindo que o fallback SPA do Express intercepte o download da planilha e retorne o HTML do React.
 
 ---
 
 ## 3. Histórico de Checkpoints Anteriores
 
+* **`f340bcd`** - (2026-10-25) `fix(livechat): blindagem de edge cases em grupos, remocao de race condition e novo loader dinamico`
 * **`21dfac9`** - (2026-10-25) `docs: registro de checkpoints e histórico do Git para consulta futura`
 * **`2193d49`** - (2026-10-25) `feat: central de conversas (LiveChat), fila de mensagens, IA conversacional e melhorias de UX`
 * **`b059e8e`** - (2025-07-12) `Novo ponto de partida estável`
