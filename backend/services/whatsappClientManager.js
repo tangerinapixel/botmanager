@@ -1150,10 +1150,14 @@ class WhatsAppClientManager {
                 if (this.waClientState === 'READY' && !isOldMessage) {
                     const authorJid = msg.author || '';
                     const authorName = msg._data?.notifyName || (authorJid ? formatPhoneNumber(authorJid) : '');
+                    const hasMedia = Boolean(msg.hasMedia || msg.type === 'image' || msg.type === 'sticker');
+                    const isVisualMedia = Boolean(hasMedia && (msg.type === 'image' || msg.type === 'sticker'));
+                    const serializedId = msg.id?._serialized || `${from}_${Date.now()}`;
+
                     this.io.emit('live-chat:new-message', {
                         jid: from,
                         message: {
-                            id: msg.id?._serialized || `${from}_${Date.now()}`,
+                            id: serializedId,
                             from: from,
                             to: 'me',
                             author: authorJid,
@@ -1161,6 +1165,8 @@ class WhatsAppClientManager {
                             fromMe: false,
                             body: msg.body,
                             type: msg.type || 'chat',
+                            hasMedia,
+                            mediaUrl: isVisualMedia ? `/api/live-chat/media/${encodeURIComponent(from)}/${encodeURIComponent(serializedId)}` : null,
                             timestamp: msgTimestamp || Date.now(),
                             isGroup: true
                         }
@@ -1229,15 +1235,21 @@ class WhatsAppClientManager {
                 });
 
                 // Transmite a mensagem em tempo real para o painel de atendimento/Live Chat
+                const hasMedia = Boolean(msg.hasMedia || msg.type === 'image' || msg.type === 'sticker');
+                const isVisualMedia = Boolean(hasMedia && (msg.type === 'image' || msg.type === 'sticker'));
+                const serializedId = msg.id?._serialized || `${msg.from}_${Date.now()}`;
+
                 ioRef.emit('live-chat:new-message', {
                     jid: msg.from,
                     message: {
-                        id: msg.id?._serialized || `${msg.from}_${Date.now()}`,
+                        id: serializedId,
                         from: msg.from,
                         to: 'me',
                         fromMe: false,
                         body: msg.body,
                         type: msg.type || 'chat',
+                        hasMedia,
+                        mediaUrl: isVisualMedia ? `/api/live-chat/media/${encodeURIComponent(msg.from)}/${encodeURIComponent(serializedId)}` : null,
                         timestamp: (msg.timestamp || 0) * 1000 || Date.now()
                     }
                 });

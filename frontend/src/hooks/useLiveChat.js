@@ -223,9 +223,9 @@ export function useLiveChat() {
   }, [fetchMessagesForJid, setActiveJid, setMessages]);
 
   /**
-   * Envia uma mensagem para o contato ativo com atualização otimista
+   * Envia uma mensagem para o contato ativo com atualização otimista (suporta texto e/ou arquivo de imagem)
    */
-  const sendMessage = useCallback(async (text) => {
+  const sendMessage = useCallback(async (text, imageFile = null) => {
     const targetJid = activeJidRef.current;
     if (!targetJid) {
       if (notify) notify('Selecione uma conversa para enviar mensagem.', 'warning');
@@ -233,19 +233,33 @@ export function useLiveChat() {
     }
 
     const cleanText = (text || '').trim();
-    if (!cleanText) return false;
+    if (!cleanText && !imageFile) return false;
 
     setIsSending(true);
 
     // Mensagem otimista na tela imediatamente
     const tempId = `temp_${Date.now()}`;
+    let localPreviewUrl = null;
+    if (imageFile) {
+      try {
+        localPreviewUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(imageFile);
+        });
+      } catch (_) {}
+    }
+
     const optimisticMsg = {
       id: tempId,
       from: 'me',
       to: targetJid,
       fromMe: true,
       body: cleanText,
-      type: 'chat',
+      type: imageFile ? 'image' : 'chat',
+      hasMedia: Boolean(imageFile),
+      mediaUrl: localPreviewUrl,
       timestamp: Date.now(),
       status: 'sending'
     };
@@ -258,7 +272,7 @@ export function useLiveChat() {
         if (c.jid === targetJid) {
           return {
             ...c,
-            lastMessage: cleanText,
+            lastMessage: imageFile ? (cleanText ? `📷 ${cleanText}` : '📷 Imagem') : cleanText,
             timestamp: Date.now(),
             lastMsgFromMe: true
           };
@@ -275,11 +289,24 @@ export function useLiveChat() {
     });
 
     try {
-      const response = await fetch(`${API_BASE}/api/live-chat/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jid: targetJid, message: cleanText })
-      });
+      let response;
+      if (imageFile) {
+        const formData = new FormData();
+        formData.append('jid', targetJid);
+        formData.append('message', cleanText);
+        formData.append('image', imageFile);
+
+        response = await fetch(`${API_BASE}/api/live-chat/send`, {
+          method: 'POST',
+          body: formData
+        });
+      } else {
+        response = await fetch(`${API_BASE}/api/live-chat/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jid: targetJid, message: cleanText })
+        });
+      }
 
       const result = await response.json();
       if (!response.ok || !result.success) {
@@ -292,7 +319,12 @@ export function useLiveChat() {
         if (alreadyInState) {
           return prev.filter(m => m.id !== tempId);
         }
-        return prev.map(m => m.id === tempId ? { ...m, id: result.messageId, status: 'sent' } : m);
+        return prev.map(m => m.id === tempId ? {
+          ...m,
+          id: result.messageId,
+          status: 'sent',
+          mediaUrl: result.mediaUrl || m.mediaUrl
+        } : m);
       });
       return true;
     } catch (err) {

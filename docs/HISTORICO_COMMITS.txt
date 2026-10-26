@@ -1,6 +1,7 @@
 HISTÓRICO DE COMMITS DO REPOSITÓRIO (Branch: ponto-estavel)
 ============================================================
 
+* 5af3931 - (2026-10-25) feat(livechat): suporte a envio e renderizacao de imagens, cache inteligente e correcoes v2.1.7 [Roni Moreira]
 * 9ab941d - (2026-10-25) fix(etiquetas): consistencia estrita de contatos exportaveis e cofre ultra-leve lidPhoneStore [Roni Moreira]
 * f340bcd - (2026-10-25) fix(livechat): blindagem de edge cases em grupos, remocao de race condition e novo loader dinamico [Roni Moreira]
 * 21dfac9 - (2026-10-25) docs: registro de checkpoints e histórico do Git para consulta futura [Roni Moreira]

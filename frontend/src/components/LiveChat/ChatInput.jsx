@@ -1,6 +1,6 @@
 // frontend/src/components/LiveChat/ChatInput.jsx
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, Bold, Italic, Strikethrough, Code, Smile, Pencil, X } from 'lucide-react';
+import { Send, Loader2, Bold, Italic, Strikethrough, Code, Smile, Pencil, X, Image as ImageIcon } from 'lucide-react';
 import EmojiPickerPopover from './EmojiPickerPopover';
 
 export default function ChatInput({
@@ -14,7 +14,9 @@ export default function ChatInput({
 }) {
   const [text, setText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null); // { file, previewUrl, name, sizeFormatted }
   const textareaRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Foca no input sempre que o chat ativo mudar
   useEffect(() => {
@@ -48,10 +50,66 @@ export default function ChatInput({
     }
   }, [text]);
 
+  const formatFileSize = (bytes) => {
+    if (!bytes || bytes <= 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+  };
+
+  const handleFileSelect = (file) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setSelectedImage({
+        file,
+        previewUrl: e.target.result, // Data URL data:image/...;base64,... (compatível com CSP)
+        name: file.name || 'imagem.jpg',
+        sizeFormatted: formatFileSize(file.size)
+      });
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleClearImage = () => {
+    setSelectedImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Suporte a Ctrl+V: cola imagem/screenshot diretamente da área de transferência
+  const handlePaste = (e) => {
+    if (disabled || isSending) return;
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.indexOf('image') !== -1) {
+        const file = item.getAsFile();
+        if (file) {
+          e.preventDefault();
+          handleFileSelect(file);
+          break;
+        }
+      }
+    }
+  };
+
   const handleSend = async () => {
-    if (!text.trim() || disabled || isSending) return;
+    const hasImage = Boolean(selectedImage?.file);
+    if ((!text.trim() && !hasImage) || disabled || isSending) return;
+
     const toSend = text;
+    const imgToSend = selectedImage?.file || null;
+
     setText('');
+    handleClearImage();
     setShowEmojiPicker(false);
     if (textareaRef.current) {
       textareaRef.current.style.height = '40px';
@@ -63,7 +121,7 @@ export default function ChatInput({
         setText(toSend);
       }
     } else {
-      const success = await onSendMessage(toSend);
+      const success = await onSendMessage(toSend, imgToSend);
       if (!success) {
         setText(toSend);
       }
@@ -128,6 +186,19 @@ export default function ChatInput({
 
   return (
     <div className="live-chat-input-container">
+      {/* Input oculto para seleção de arquivos */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          if (e.target.files?.[0]) {
+            handleFileSelect(e.target.files[0]);
+          }
+        }}
+      />
+
       {/* Popover Flutuante de Emojis */}
       <EmojiPickerPopover
         open={showEmojiPicker}
@@ -163,6 +234,27 @@ export default function ChatInput({
         </div>
       )}
 
+      {/* Banner de Pré-visualização da Imagem Anexada */}
+      {selectedImage && (
+        <div className="live-chat-image-preview-banner">
+          <div className="live-chat-image-preview-thumb-wrapper">
+            <img src={selectedImage.previewUrl} alt="Preview" className="live-chat-image-preview-thumb" />
+          </div>
+          <div className="live-chat-image-preview-info">
+            <span className="live-chat-image-preview-name">{selectedImage.name}</span>
+            <span className="live-chat-image-preview-size">{selectedImage.sizeFormatted}</span>
+          </div>
+          <button
+            type="button"
+            className="live-chat-image-preview-remove-btn"
+            onClick={handleClearImage}
+            title="Remover imagem selecionada"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       {/* Barra Discreta de Formatação Rápida & Emojis */}
       <div className="live-chat-format-toolbar">
         <button
@@ -173,6 +265,17 @@ export default function ChatInput({
           title="Inserir Emoji"
         >
           <Smile size={14} />
+        </button>
+
+        {/* Botão de Anexar Imagem */}
+        <button
+          type="button"
+          className={`live-chat-tool-btn ${selectedImage ? 'active' : ''}`}
+          onClick={() => fileInputRef.current?.click()}
+          disabled={disabled || isSending || Boolean(editingMessage)}
+          title="Anexar Imagem (ou cole com Ctrl+V)"
+        >
+          <ImageIcon size={14} />
         </button>
 
         <div className="live-chat-toolbar-divider" />
@@ -225,11 +328,14 @@ export default function ChatInput({
               ? 'Selecione uma conversa para responder...'
               : editingMessage
                 ? (editingMessage.isOver15Min ? 'Corrija o texto e pressione Enter para reenviar...' : 'Edite o texto e pressione Enter para salvar no WhatsApp...')
-                : 'Digite uma mensagem (Pressione Enter para enviar)...'
+                : selectedImage
+                  ? 'Digite uma legenda para a imagem (opcional, Enter para enviar)...'
+                  : 'Digite uma mensagem (Cole imagens com Ctrl+V ou Enter para enviar)...'
           }
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           disabled={disabled || isSending}
           rows={1}
         />
@@ -238,7 +344,7 @@ export default function ChatInput({
           type="button"
           className="live-chat-send-btn"
           onClick={handleSend}
-          disabled={disabled || !text.trim() || isSending}
+          disabled={disabled || (!text.trim() && !selectedImage) || isSending}
           title={
             editingMessage
               ? (editingMessage.isOver15Min ? 'Reenviar corrigida (Enter)' : 'Salvar edição (Enter)')

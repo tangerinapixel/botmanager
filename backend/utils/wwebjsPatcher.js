@@ -327,6 +327,27 @@ class WWebJSPatcher {
                             }
                         };
                     }
+
+                    // Patch 4: Correção para envio de mídia no WhatsApp Web v2.3000+
+                    // Elimina 'Data passed to getter must include an id property' causado pelo spread de __x_id do MediaData
+                    if (window.WWebJS && !window.WWebJS._processMediaDataPatched) {
+                        const origProcessMediaData = window.WWebJS.processMediaData;
+                        if (typeof origProcessMediaData === 'function') {
+                            window.WWebJS.processMediaData = async function(...args) {
+                                const mediaData = await origProcessMediaData.apply(this, args);
+                                if (mediaData) {
+                                    try {
+                                        delete mediaData.__x_id;
+                                        delete mediaData.revisionNumber;
+                                        delete mediaData.parent;
+                                        delete mediaData.collection;
+                                    } catch (_) {}
+                                }
+                                return mediaData;
+                            };
+                            window.WWebJS._processMediaDataPatched = true;
+                        }
+                    }
                 });
             }
 

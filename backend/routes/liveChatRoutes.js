@@ -3,8 +3,13 @@
 
 const express = require('express');
 const router = express.Router();
+const path = require('path');
+const multer = require('multer');
 const liveChatService = require('../services/liveChatService');
 const { ts } = require('../utils/logger');
+
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+const upload = multer({ dest: uploadsDir });
 
 module.exports = function(clientManager, io) {
   // GET /api/live-chat/chats — Lista conversas recentes
@@ -46,15 +51,44 @@ module.exports = function(clientManager, io) {
     }
   });
 
-  // POST /api/live-chat/send — Envia mensagem para um contato
-  router.post('/send', async (req, res) => {
+  // GET /api/live-chat/media/:jid/:messageId ou /api/live-chat/media/:messageId — Obtém imagem sob demanda com cache
+  router.get(['/media/:jid/:messageId', '/media/:messageId'], async (req, res) => {
     try {
-      const { jid, message } = req.body;
-      if (!jid || !message) {
-        return res.status(400).json({ success: false, message: 'Parâmetros "jid" e "message" são obrigatórios.' });
+      const jid = req.params.jid ? decodeURIComponent(req.params.jid) : '';
+      const messageId = decodeURIComponent(req.params.messageId);
+
+      const media = await liveChatService.getMessageMedia(clientManager, jid, messageId);
+      if (!media) {
+        return res.status(404).json({ success: false, message: 'Mídia não encontrada ou indisponível.' });
       }
 
-      const result = await liveChatService.sendMessage(clientManager, jid, message, io);
+      res.setHeader('Content-Type', media.mimetype || 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+
+      if (media.stream) {
+        return media.stream.pipe(res);
+      } else if (media.buffer) {
+        return res.end(media.buffer);
+      }
+
+      return res.status(404).end();
+    } catch (err) {
+      console.error(`[${ts()}] [LiveChatRoutes] Erro em GET /media:`, err.message);
+      return res.status(500).json({ success: false, message: err.message });
+    }
+  });
+
+  // POST /api/live-chat/send — Envia mensagem para um contato (texto e/ou imagem)
+  router.post('/send', upload.single('image'), async (req, res) => {
+    try {
+      const { jid, message, text } = req.body;
+      const cleanText = message || text || '';
+
+      if (!jid || (!cleanText.trim() && !req.file)) {
+        return res.status(400).json({ success: false, message: 'Parâmetro "jid" e ao menos um texto ou imagem são obrigatórios.' });
+      }
+
+      const result = await liveChatService.sendMessage(clientManager, jid, cleanText, io, req.file);
       return res.json(result);
     } catch (err) {
       console.error(`[${ts()}] [LiveChatRoutes] Erro em POST /send:`, err.message);

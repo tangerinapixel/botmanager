@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useLayoutEffect } from 'react';
-import { MessageCircle, MessageSquare, CheckCheck, Clock, AlertTriangle, Phone, Users, Pencil, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import { MessageCircle, MessageSquare, CheckCheck, Clock, AlertTriangle, Phone, Users, Pencil, Trash2, X, Download, ZoomIn, Image as ImageIcon } from 'lucide-react';
 import ContactAvatar from './ContactAvatar';
 import { isRenderableMessage } from '../../hooks/useLiveChat';
 
@@ -146,6 +146,37 @@ export default function ChatMessageArea({
   const shouldInstantScrollRef = useRef(true);
   const lastMessagesLengthRef = useRef(0);
   const lastMessageIdRef = useRef(null);
+
+  const [lightboxImage, setLightboxImage] = useState(null); // { url, caption }
+  const [failedImages, setFailedImages] = useState(() => new Set());
+
+  // Fechar lightbox no Esc
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') setLightboxImage(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // Ancoragem inteligente de rolagem quando imagens terminam de carregar no DOM
+  const handleImageLoad = () => {
+    const container = containerRef.current;
+    if (!container) return;
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    // Se o usuário já estava no final ou próximo do rodapé, mantém ancorado
+    if (distanceFromBottom < 220) {
+      container.scrollTop = container.scrollHeight;
+    }
+  };
+
+  const handleImageError = (msgId) => {
+    setFailedImages(prev => {
+      const next = new Set(prev);
+      next.add(msgId);
+      return next;
+    });
+  };
 
   // Detecta mudança de conversa ativa (JID) durante o ciclo de renderização
   if (currentJid !== lastJidRef.current) {
@@ -329,6 +360,13 @@ export default function ChatMessageArea({
 
             const isMedia = Boolean(msg.hasMedia || ['image', 'video', 'audio', 'ptt', 'document', 'sticker', 'location', 'vcard', 'multi_vcard'].includes(msg.type));
             const hasBody = Boolean(typeof msg.body === 'string' && msg.body.trim().length > 0);
+            const isImage = Boolean(
+              msg.type === 'image' ||
+              msg.type === 'sticker' ||
+              (msg.hasMedia && !['video', 'audio', 'ptt', 'document'].includes(msg.type))
+            );
+            const mediaSrc = msg.mediaUrl || `http://localhost:5005/api/live-chat/media/${encodeURIComponent(activeChat?.jid || '')}/${encodeURIComponent(msg.id)}`;
+            const isImageFailed = failedImages.has(msg.id);
 
             return (
               <React.Fragment key={msg.id || index}>
@@ -343,7 +381,7 @@ export default function ChatMessageArea({
 
                 {/* Bolha da Mensagem */}
                 <div
-                  className={`live-chat-bubble ${isMe ? 'sent' : 'received'}`}
+                  className={`live-chat-bubble ${isMe ? 'sent' : 'received'} ${isImage ? 'has-image-bubble' : ''}`}
                   title={formatFullDateTime(msg.timestamp)}
                 >
                   {/* Se for mensagem recebida em grupo, identifica o remetente */}
@@ -353,22 +391,56 @@ export default function ChatMessageArea({
                     </div>
                   )}
 
+                  {/* Renderização de Imagem Visual ou Fallback */}
+                  {isImage && (
+                    <div className="live-chat-bubble-media-wrapper">
+                      {isImageFailed ? (
+                        <div className="live-chat-image-failed-box">
+                          <ImageIcon size={18} style={{ opacity: 0.6 }} />
+                          <span>Imagem indisponível no histórico</span>
+                        </div>
+                      ) : (
+                        <div
+                          className="live-chat-image-wrapper"
+                          onClick={() => setLightboxImage({ url: mediaSrc, caption: msg.body })}
+                          title="Clique para ampliar a imagem"
+                        >
+                          <img
+                            src={mediaSrc}
+                            alt="Foto"
+                            className="live-chat-image-content"
+                            loading="lazy"
+                            onLoad={handleImageLoad}
+                            onError={() => handleImageError(msg.id)}
+                          />
+                          <div className="live-chat-image-overlay-zoom">
+                            <ZoomIn size={14} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="live-chat-bubble-text">
-                    {/* Fallback elegante para mídias sem legenda */}
-                    {isMedia && !hasBody && (
+                    {/* Fallback para outras mídias que não sejam imagem (áudio, documento, vídeo) */}
+                    {isMedia && !isImage && !hasBody && (
                       <span className="live-chat-media-fallback" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontStyle: 'italic', opacity: 0.9 }}>
                         {getMediaFallbackLabel(msg.type)}
                       </span>
                     )}
 
-                    {/* Mídia com legenda: exibe indicador de mídia + texto */}
-                    {isMedia && hasBody && (
+                    {/* Mídia não-imagem com legenda: exibe indicador + texto */}
+                    {isMedia && !isImage && hasBody && (
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontStyle: 'italic', opacity: 0.85, marginBottom: '4px', fontSize: '0.78rem' }}>
                         {getMediaFallbackLabel(msg.type)}
                       </div>
                     )}
 
-                    {hasBody && formatWhatsAppText(msg.body)}
+                    {hasBody && (
+                      <div className={isImage ? 'live-chat-image-caption' : ''}>
+                        {formatWhatsAppText(msg.body)}
+                      </div>
+                    )}
                   </div>
 
                   <div className="live-chat-bubble-meta">
@@ -425,6 +497,46 @@ export default function ChatMessageArea({
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Modal Lightbox de Visualização Ampliada da Imagem */}
+      {lightboxImage && (
+        <div className="live-chat-lightbox-overlay" onClick={() => setLightboxImage(null)}>
+          <div className="live-chat-lightbox-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="live-chat-lightbox-header">
+              <span className="live-chat-lightbox-title">Visualização de Imagem</span>
+              <div className="live-chat-lightbox-controls">
+                <a
+                  href={lightboxImage.url}
+                  download="imagem-whatsapp.jpg"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="live-chat-lightbox-btn"
+                  title="Baixar imagem"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Download size={16} />
+                </a>
+                <button
+                  type="button"
+                  className="live-chat-lightbox-btn"
+                  onClick={() => setLightboxImage(null)}
+                  title="Fechar (Esc)"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+            <div className="live-chat-lightbox-body">
+              <img src={lightboxImage.url} alt="Ampliador" className="live-chat-lightbox-img" />
+            </div>
+            {lightboxImage.caption && (
+              <div className="live-chat-lightbox-caption">
+                {formatWhatsAppText(lightboxImage.caption)}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }

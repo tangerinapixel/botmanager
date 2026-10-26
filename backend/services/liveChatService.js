@@ -1,6 +1,6 @@
-// backend/services/liveChatService.js
-// Serviço autônomo para leitura e envio de mensagens em tempo real via WhatsApp Web
-
+const fs = require('fs');
+const path = require('path');
+const { MessageMedia } = require('whatsapp-web.js');
 const { formatPhoneNumber, ts } = require('../utils/logger');
 const { getContactSession, findContactSession, addMessageTurn } = require('./ai/aiMemoryRepository');
 const WWebJSPatcher = require('../utils/wwebjsPatcher');
@@ -62,6 +62,60 @@ function isRenderableMessage(m) {
 // Cache em memória de fotos de perfil com TTL de 2 horas (evita chamadas redundantes ao WhatsApp Web)
 const avatarCache = new Map();
 const AVATAR_CACHE_TTL_MS = 2 * 60 * 60 * 1000;
+
+// Diretório para cache persistente de mídias do Live Chat (evita chamadas repetidas ao CDP/Puppeteer)
+const mediaCacheDir = path.join(__dirname, '..', 'data', 'media_cache');
+try {
+  if (!fs.existsSync(mediaCacheDir)) {
+    fs.mkdirSync(mediaCacheDir, { recursive: true });
+  }
+} catch (_) {}
+
+/**
+ * Higieniza o identificador da mensagem para uso seguro no sistema de arquivos
+ */
+function sanitizeMessageId(msgId) {
+  return String(msgId || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+}
+
+/**
+ * Limpa arquivos em media_cache/ mais antigos que 7 dias ou mantém no máximo 200 mais recentes
+ */
+async function pruneMediaCache() {
+  try {
+    if (!fs.existsSync(mediaCacheDir)) return;
+    const files = await fs.promises.readdir(mediaCacheDir);
+    if (files.length === 0) return;
+
+    const now = Date.now();
+    const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 dias
+    const MAX_FILES = 200;
+
+    const fileStats = [];
+    for (const f of files) {
+      const fp = path.join(mediaCacheDir, f);
+      try {
+        const st = await fs.promises.stat(fp);
+        if (now - st.mtimeMs > MAX_AGE_MS) {
+          await fs.promises.unlink(fp).catch(() => {});
+        } else {
+          fileStats.push({ path: fp, mtime: st.mtimeMs });
+        }
+      } catch (_) {}
+    }
+
+    if (fileStats.length > MAX_FILES) {
+      fileStats.sort((a, b) => b.mtime - a.mtime);
+      const toRemove = fileStats.slice(MAX_FILES);
+      for (const item of toRemove) {
+        await fs.promises.unlink(item.path).catch(() => {});
+      }
+    }
+  } catch (_) {}
+}
+
+// Dispara limpeza periódica sem bloquear inicialização
+setTimeout(() => { pruneMediaCache().catch(() => {}); }, 15000);
 
 class LiveChatService {
   /**
@@ -372,8 +426,12 @@ class LiveChatService {
             const rawNotify = m?._data?.notifyName || '';
             const authorName = !isUnknownName(rawNotify) ? rawNotify : (authorJid ? formatPhoneNumber(authorJid) : '');
 
+            const serializedId = (m && m.id && (m.id._serialized || m.id.id)) || String((m && m.timestamp) || Date.now());
+            const hasMedia = Boolean(m?.hasMedia || m?.type === 'image' || m?.type === 'sticker');
+            const isVisualMedia = Boolean(hasMedia && (m?.type === 'image' || m?.type === 'sticker'));
+
             return {
-              id: (m && m.id && (m.id._serialized || m.id.id)) || String((m && m.timestamp) || Date.now()),
+              id: serializedId,
               from: m?.from || '',
               to: m?.to || '',
               author: authorJid,
@@ -382,7 +440,8 @@ class LiveChatService {
               body: m?.body || '',
               type: m?.type || 'chat',
               timestamp: ((m && m.timestamp) || 0) * 1000,
-              hasMedia: Boolean(m?.hasMedia),
+              hasMedia: hasMedia,
+              mediaUrl: isVisualMedia ? `/api/live-chat/media/${encodeURIComponent(jid)}/${encodeURIComponent(serializedId)}` : null,
               isGroup,
             };
           });
@@ -470,19 +529,23 @@ class LiveChatService {
 
   /**
    * Envia uma mensagem em tempo real para o contato ou grupo especificado.
+   * Suporta texto e/ou arquivo de imagem anexado (MessageMedia).
    * @param {Object} clientManager 
    * @param {string} jid 
    * @param {string} text 
    * @param {Object} io 
+   * @param {Object|null} file - Objeto Multer do arquivo enviado (opcional)
    */
-  async sendMessage(clientManager, jid, text, io = null) {
+  async sendMessage(clientManager, jid, text, io = null, file = null) {
     if (!jid || typeof jid !== 'string') {
       throw new Error('JID de contato ou grupo inválido.');
     }
 
     const cleanText = (text || '').trim();
-    if (!cleanText) {
-      throw new Error('O texto da mensagem não pode estar vazio.');
+    const hasImageFile = Boolean(file && file.path && fs.existsSync(file.path));
+
+    if (!cleanText && !hasImageFile) {
+      throw new Error('É necessário fornecer um texto ou uma imagem para envio.');
     }
 
     // Normaliza o JID para garantir domínio válido
@@ -499,14 +562,27 @@ class LiveChatService {
     }
 
     const timestamp = ts();
-    console.log(`[${timestamp}] [LiveChat] Enviando mensagem manual para ${targetJid}: "${cleanText.substring(0, 30)}..."`);
+    console.log(`[${timestamp}] [LiveChat] Enviando mensagem manual para ${targetJid}: "${cleanText.substring(0, 30)}..." (com imagem: ${hasImageFile})`);
 
     // Envia diretamente via WhatsApp Web
     let sentMsg = null;
     try {
-      sentMsg = await client.sendMessage(targetJid, cleanText);
+      await WWebJSPatcher.applyChatsPatch(client);
+      if (hasImageFile) {
+        const media = MessageMedia.fromFilePath(path.resolve(file.path));
+        sentMsg = await client.sendMessage(targetJid, media, {
+          caption: cleanText || undefined,
+          sendSeen: false
+        });
+      } else {
+        sentMsg = await client.sendMessage(targetJid, cleanText);
+      }
     } catch (sendErr) {
       console.error(`[LiveChat] Erro no client.sendMessage para ${targetJid}:`, sendErr.message);
+      // Remove arquivo temporário se houver falha
+      if (hasImageFile) {
+        try { fs.unlinkSync(file.path); } catch (_) {}
+      }
       throw new Error(`Falha no envio via WhatsApp: ${sendErr.message}`);
     }
 
@@ -514,10 +590,25 @@ class LiveChatService {
     const msgId = (sentMsg && sentMsg.id && (sentMsg.id._serialized || sentMsg.id.id)) || `${targetJid}_${Date.now()}`;
     const msgTimestamp = Date.now();
 
+    // Cache inteligente de envio: move/copia o arquivo enviado diretamente para media_cache
+    let mediaUrl = null;
+    if (hasImageFile) {
+      try {
+        const sanitized = sanitizeMessageId(msgId);
+        const ext = path.extname(file.originalname || file.path) || '.jpg';
+        const cachedPath = path.join(mediaCacheDir, `${sanitized}${ext}`);
+        fs.copyFileSync(file.path, cachedPath);
+        fs.unlinkSync(file.path); // Limpa o temporário da pasta uploads
+        mediaUrl = `/api/live-chat/media/${encodeURIComponent(targetJid)}/${encodeURIComponent(msgId)}`;
+      } catch (cacheErr) {
+        console.warn(`[LiveChat] Aviso ao mover imagem enviada para o media_cache: ${cacheErr.message}`);
+      }
+    }
+
     // Salva no repositório de memória local apenas para contatos privados
     if (!isGroup) {
       try {
-        addMessageTurn(targetJid, 'model', cleanText, { name: '' });
+        addMessageTurn(targetJid, 'model', cleanText || '[Imagem enviada]', { name: '' });
       } catch (_) {}
     }
 
@@ -533,7 +624,9 @@ class LiveChatService {
           authorName: 'Você',
           fromMe: true,
           body: cleanText,
-          type: 'chat',
+          type: hasImageFile ? 'image' : 'chat',
+          hasMedia: hasImageFile,
+          mediaUrl: mediaUrl,
           timestamp: msgTimestamp,
           isGroup,
         }
@@ -542,8 +635,8 @@ class LiveChatService {
       io.emit('system-log', {
         id: Date.now(),
         type: 'info',
-        action: 'Mensagem Enviada (Operador)',
-        message: `Para ${isGroup ? 'Grupo' : formatPhoneNumber(targetJid)}: "${cleanText.length > 35 ? cleanText.substring(0, 35) + '…' : cleanText}"`,
+        action: hasImageFile ? 'Imagem Enviada (Operador)' : 'Mensagem Enviada (Operador)',
+        message: `Para ${isGroup ? 'Grupo' : formatPhoneNumber(targetJid)}: ${hasImageFile ? '📷 [Imagem]' : ''} "${cleanText.length > 35 ? cleanText.substring(0, 35) + '…' : cleanText}"`,
         timestamp: new Date().toISOString()
       });
     }
@@ -552,6 +645,8 @@ class LiveChatService {
       success: true,
       messageId: msgId,
       timestamp: msgTimestamp,
+      hasMedia: hasImageFile,
+      mediaUrl
     };
   }
 
@@ -753,6 +848,142 @@ class LiveChatService {
       newBody: cleanText,
       timestamp: Date.now()
     };
+  }
+
+  /**
+   * Obtém o binário de uma imagem sob demanda com cache persistente em disco.
+   * Não utiliza client.getMessageById() para evitar erro CDP -32000 em mensagens com quotedMsg.
+   * @param {Object} clientManager 
+   * @param {string} jid 
+   * @param {string} messageId 
+   * @returns {Promise<{fromCache: boolean, mimetype: string, stream?: any, buffer?: Buffer}|null>}
+   */
+  async getMessageMedia(clientManager, jid, messageId) {
+    if (!messageId || typeof messageId !== 'string') return null;
+    const sanitizedId = sanitizeMessageId(messageId);
+
+    // 1. Verificação instantânea no cache do disco
+    try {
+      if (fs.existsSync(mediaCacheDir)) {
+        const cachedFiles = await fs.promises.readdir(mediaCacheDir);
+        const match = cachedFiles.find(f => f.startsWith(sanitizedId + '.'));
+        if (match) {
+          const filePath = path.join(mediaCacheDir, match);
+          const ext = path.extname(match).toLowerCase();
+          const mimeMap = {
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.webp': 'image/webp',
+            '.gif': 'image/gif'
+          };
+          const mimetype = mimeMap[ext] || 'image/jpeg';
+          return {
+            fromCache: true,
+            filePath,
+            mimetype,
+            stream: fs.createReadStream(filePath)
+          };
+        }
+      }
+    } catch (cacheErr) {
+      console.warn(`[LiveChatService] Aviso ao verificar cache de mídia: ${cacheErr.message}`);
+    }
+
+    // 2. Extração pontual via Puppeteer (apenas 1 avaliação CDP para este item específico)
+    const client = clientManager && typeof clientManager.getClient === 'function' ? clientManager.getClient() : null;
+    if (!client || !client.pupPage || client.pupPage.isClosed()) {
+      return null;
+    }
+
+    try {
+      const result = await client.pupPage.evaluate(async (targetJid, targetMsgId) => {
+        try {
+          const collections = window.require ? window.require('WAWebCollections') : null;
+          if (!collections) return null;
+
+          // Localiza a mensagem na Store
+          let msg = collections.Msg?.get(targetMsgId);
+          if (!msg && targetJid && collections.Chat) {
+            const chat = collections.Chat.get(targetJid);
+            if (chat && chat.msgs) {
+              msg = chat.msgs.get(targetMsgId) ||
+                    (chat.msgs.getModelsArray ? chat.msgs.getModelsArray().find(m => (m.id?._serialized === targetMsgId || m.id?.id === targetMsgId || m.id?.$1 === targetMsgId)) : null);
+            }
+          }
+
+          if (!msg) {
+            try {
+              const fetchRes = await collections.Msg.getMessagesById([targetMsgId]);
+              msg = fetchRes?.messages?.[0];
+            } catch (_) {}
+          }
+
+          if (!msg || !msg.mediaData) {
+            return null;
+          }
+
+          // Executa o download interno caso ainda não esteja em memória
+          if (typeof msg.downloadMedia === 'function' && msg.mediaData.mediaStage !== 'RESOLVED') {
+            try {
+              await msg.downloadMedia({ downloadEvenIfExpensive: true, rmrReason: 1, isUserInitiated: true });
+            } catch (_) {}
+          }
+
+          // Recupera o blob de mídia do cache ou do mediaObject
+          let blob = null;
+          try {
+            const blobCache = window.require('WAWebMediaInMemoryBlobCache')?.InMemoryMediaBlobCache;
+            if (blobCache && msg.mediaObject?.filehash) {
+              blob = blobCache.get(msg.mediaObject.filehash);
+            }
+          } catch (_) {}
+
+          if (!blob && msg.mediaObject?.mediaBlob && typeof msg.mediaObject.mediaBlob.forceToBlob === 'function') {
+            blob = msg.mediaObject.mediaBlob.forceToBlob();
+          }
+
+          if (!blob) {
+            return null;
+          }
+
+          const arrayBuffer = await blob.arrayBuffer();
+          const base64 = await window.WWebJS.arrayBufferToBase64Async(arrayBuffer);
+          return {
+            mimetype: msg.mimetype || blob.type || 'image/jpeg',
+            data: base64
+          };
+        } catch (evalErr) {
+          return null;
+        }
+      }, jid, messageId);
+
+      if (!result || !result.data) {
+        return null;
+      }
+
+      const buffer = Buffer.from(result.data, 'base64');
+      const mimetype = result.mimetype || 'image/jpeg';
+      let ext = '.jpg';
+      if (mimetype.includes('png')) ext = '.png';
+      else if (mimetype.includes('webp')) ext = '.webp';
+      else if (mimetype.includes('gif')) ext = '.gif';
+
+      // Salva de forma assíncrona no cache de disco
+      const destPath = path.join(mediaCacheDir, `${sanitizedId}${ext}`);
+      fs.promises.writeFile(destPath, buffer).catch(writeErr => {
+        console.warn(`[LiveChatService] Falha ao gravar cache de mídia: ${writeErr.message}`);
+      });
+
+      return {
+        fromCache: false,
+        buffer,
+        mimetype
+      };
+    } catch (err) {
+      console.error(`[LiveChatService] Erro ao obter mídia da mensagem ${messageId}:`, err.message);
+      return null;
+    }
   }
 }
 
