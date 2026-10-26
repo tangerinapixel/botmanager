@@ -9,7 +9,14 @@ const liveChatService = require('../services/liveChatService');
 const { ts } = require('../utils/logger');
 
 const uploadsDir = path.join(__dirname, '..', 'uploads');
-const upload = multer({ dest: uploadsDir });
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname || '') || '.jpg';
+    cb(null, `livechat_${Date.now()}_${Math.random().toString(36).substring(2, 8)}${ext}`);
+  }
+});
+const upload = multer({ storage });
 
 module.exports = function(clientManager, io) {
   // GET /api/live-chat/chats — Lista conversas recentes

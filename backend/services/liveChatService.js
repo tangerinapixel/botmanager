@@ -437,7 +437,7 @@ class LiveChatService {
               author: authorJid,
               authorName: authorName,
               fromMe: Boolean(m?.fromMe),
-              body: m?.body || '',
+              body: m?.body || m?.caption || '',
               type: m?.type || 'chat',
               timestamp: ((m && m.timestamp) || 0) * 1000,
               hasMedia: hasMedia,
@@ -569,10 +569,30 @@ class LiveChatService {
     try {
       await WWebJSPatcher.applyChatsPatch(client);
       if (hasImageFile) {
-        const media = MessageMedia.fromFilePath(path.resolve(file.path));
+        // Obtenção robusta e estrita de mimetype e filename para garantir type: 'image'
+        let mimetype = file.mimetype;
+        if (!mimetype || !mimetype.startsWith('image/')) {
+          const ext = path.extname(file.originalname || file.path || '').toLowerCase();
+          if (ext === '.png') mimetype = 'image/png';
+          else if (ext === '.webp') mimetype = 'image/webp';
+          else if (ext === '.gif') mimetype = 'image/gif';
+          else mimetype = 'image/jpeg';
+        }
+
+        let filename = file.originalname || 'imagem.jpg';
+        if (!path.extname(filename)) {
+          const ext = mimetype === 'image/png' ? '.png' : (mimetype === 'image/webp' ? '.webp' : (mimetype === 'image/gif' ? '.gif' : '.jpg'));
+          filename = `${filename}${ext}`;
+        }
+
+        const b64data = fs.readFileSync(path.resolve(file.path), { encoding: 'base64' });
+        const media = new MessageMedia(mimetype, b64data, filename);
+
         sentMsg = await client.sendMessage(targetJid, media, {
+          media: media,
           caption: cleanText || undefined,
-          sendSeen: false
+          sendSeen: false,
+          sendMediaAsDocument: false
         });
       } else {
         sentMsg = await client.sendMessage(targetJid, cleanText);

@@ -330,11 +330,21 @@ class WWebJSPatcher {
 
                     // Patch 4: Correção para envio de mídia no WhatsApp Web v2.3000+
                     // Elimina 'Data passed to getter must include an id property' causado pelo spread de __x_id do MediaData
+                    // e garante que imagens sejam enviadas estritamente com type: 'image' (e nunca 'document')
                     if (window.WWebJS && !window.WWebJS._processMediaDataPatched) {
                         const origProcessMediaData = window.WWebJS.processMediaData;
                         if (typeof origProcessMediaData === 'function') {
-                            window.WWebJS.processMediaData = async function(...args) {
-                                const mediaData = await origProcessMediaData.apply(this, args);
+                            window.WWebJS.processMediaData = async function(mediaInfo, options = {}) {
+                                if (mediaInfo) {
+                                    if (!mediaInfo.mimetype || mediaInfo.mimetype === 'null') {
+                                        const ext = (mediaInfo.filename || '').split('.').pop().toLowerCase();
+                                        if (ext === 'png') mediaInfo.mimetype = 'image/png';
+                                        else if (ext === 'webp') mediaInfo.mimetype = 'image/webp';
+                                        else if (ext === 'gif') mediaInfo.mimetype = 'image/gif';
+                                        else mediaInfo.mimetype = 'image/jpeg';
+                                    }
+                                }
+                                const mediaData = await origProcessMediaData.call(this, mediaInfo, options);
                                 if (mediaData) {
                                     try {
                                         delete mediaData.__x_id;
@@ -342,10 +352,36 @@ class WWebJSPatcher {
                                         delete mediaData.parent;
                                         delete mediaData.collection;
                                     } catch (_) {}
+
+                                    if (mediaInfo && mediaInfo.mimetype && mediaInfo.mimetype.startsWith('image/') && !options?.forceDocument) {
+                                        mediaData.type = 'image';
+                                        if (mediaData.attributes) mediaData.attributes.type = 'image';
+                                        if (typeof mediaData.set === 'function') {
+                                            try { mediaData.set('type', 'image'); } catch (_) {}
+                                        }
+                                    }
                                 }
                                 return mediaData;
                             };
                             window.WWebJS._processMediaDataPatched = true;
+                        }
+                    }
+
+                    // Patch 5: Resiliência no retorno do sendMessage no WhatsApp Web v2.3000+
+                    // Garante que o retorno nunca seja undefined se a mensagem foi enviada ao chat
+                    if (window.WWebJS && !window.WWebJS._sendMessagePatched) {
+                        const origSendMessage = window.WWebJS.sendMessage;
+                        if (typeof origSendMessage === 'function') {
+                            window.WWebJS.sendMessage = async function(chat, content, options = {}) {
+                                const result = await origSendMessage.call(this, chat, content, options);
+                                if (!result && chat && chat.msgs) {
+                                    const msgs = chat.msgs.getModelsArray ? chat.msgs.getModelsArray() : [];
+                                    const lastSent = msgs.slice(-1).find(m => m?.id?.fromMe);
+                                    if (lastSent) return lastSent;
+                                }
+                                return result;
+                            };
+                            window.WWebJS._sendMessagePatched = true;
                         }
                     }
                 });
