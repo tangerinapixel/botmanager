@@ -7,7 +7,7 @@ Este documento contém o registro dos checkpoints, branches e histórico de vers
 ## 1. Informações do Checkpoint Atual
 
 * **Versão:** `2.1.7`
-* **Hash do Commit:** `5af3931`
+* **Hash do Commit:** `dab5f3a`
 * **Data do Commit:** 25 de Outubro de 2026, 21:03:03 (-03:00)
 * **Autor:** Roni Moreira <roni@virtualteologico.com.br>
 * **Branch Ativa:** `ponto-estavel`
