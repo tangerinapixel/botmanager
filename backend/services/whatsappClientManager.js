@@ -1003,6 +1003,10 @@ class WhatsAppClientManager {
             // Executa o patch de chats uma única vez ao conectar
             await WWebJSPatcher.applyChatsPatch(this.client).catch(() => {});
 
+            // Dispara auto-diagnóstico não-bloqueante dos contratos Meta Comet
+            const WAEngine = require('../wa-engine');
+            WAEngine.runHealthCheck(this.client).catch(() => {});
+
             // Garante que o listener de mensagens em tempo real está realmente ativo.
             // Cobre o caso em que a lib emitiu 'ready' sem executar attachEventListeners (handshake retomado/forçado).
             await this._ensureMessageListeners('ready').catch(() => false);

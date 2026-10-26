@@ -73,6 +73,12 @@ apiRoutes(app, io, null, {
   upload, respostasAtivasRef, saudacaoAtivaRef, tempoExpiracaoMsRef, iaAtivaRef
 });
 
+// Rotas de Sistema e Diagnóstico de Infraestrutura (disponível imediatamente)
+const systemRoutes = require('./routes/systemRoutes')({
+  getClient: () => globalClientManager && (typeof globalClientManager.getClient === 'function' ? globalClientManager.getClient() : globalClientManager.client)
+});
+app.use('/api/system', systemRoutes);
+
 // Configuração imediata do Socket.IO com getters dinâmicos para o WhatsApp Client
 const configurarSocketEvents = require('./socketEvents');
 configurarSocketEvents(io, {

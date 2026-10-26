@@ -7,12 +7,33 @@ Este documento contém o registro dos checkpoints, branches e histórico de vers
 ## 1. Informações do Checkpoint Atual
 
 * **Versão:** `2.1.7`
-* **Hash do Commit:** `f0666f0`
-* **Data do Commit:** 25 de Outubro de 2026, 21:55:54 (-03:00)
+* **Hash do Commit:** `538f03b`
+* **Data do Checkpoint:** 25 de Outubro de 2026, 23:15:00 (-03:00)
 * **Autor:** Roni Moreira <roni@virtualteologico.com.br>
 * **Branch Ativa:** `ponto-estavel`
-* **Mensagem:** `fix(livechat): envio nativo de imagens como type image e preservacao de extensao no multer`
-* **Status:** Árvore de trabalho limpa (`working tree clean`), todas as alterações consolidadas.
+* **Mensagem:** `feat(wa-engine): arquitetura de soberania do wwebjs com adapters modulares e auto-diagnostico`
+* **Status:** Validação empírica concluída com 100% de sucesso (12 contratos Meta OK).
+
+---
+
+## 2. Resumo das Alterações Consolidadas neste Checkpoint (Motor Soberano WAEngine)
+
+### a) Vendor Soberano do WhatsApp-Web.js (`backend/vendor/wwebjs`)
+- Código-fonte essencial de `whatsapp-web.js` (463.93 KB) 100% versionado no Git sem subpastas `node_modules` nem arquivos compilados.
+- Script de espelhamento limpo `backend/wa-engine/syncVendor.js` adicionado ao `postinstall` do `backend/package.json` sem depender de symlinks instáveis no Windows.
+
+### b) Adaptadores Modulares de Domínio (`backend/wa-engine/adapters/`)
+- Desacoplamento completo dos 5 patches históricos de `wwebjsPatcher.js`:
+  1. `chatAdapter.js`: Patch 1 (`window.WWebJS.getChatModel` flat DTO), Patch 2 (multi-store fallback com `WAWebChatCollection`) e Patch 3 (override de `client.getChats` via `ChatFactory` com garantia de objetos Chat nativos).
+  2. `mediaAdapter.js`: Patch 4 (higienização profunda de `MediaData` expurgando `__x_id` e metadados que corrompiam o `MsgKey`).
+  3. `messageAdapter.js`: Patch 5 (recuperação resiliente de mensagens enviadas a partir da coleção `chat.msgs` em caso de dessincronização).
+  4. `labelLidAdapter.js`: Resolução de número de telefone a partir de LID via `WAWebApiContact`.
+
+### c) Auto-Diagnóstico Não-Bloqueante dos Contratos Meta Comet (`backend/wa-engine/diagnostics/`)
+- `contractCatalog.js`: Catálogo com 12 contratos internos da Meta (Comet / `window.require`) com mapeamento de severidade e tipos de retorno.
+- `waStoreHealthCheck.js`: Auditoria 100% não-bloqueante e protegida por `try/catch` defensivo, inspecionando versão ativa do WhatsApp Web e contratos sem efeitos colaterais.
+- Endpoint de monitoramento: `GET /api/system/wa-health`.
+- `backend/utils/wwebjsPatcher.js` preservado como Facade 100% retrocompatível delegando para `WAEngine.applyAll(client)`.
 
 ---
 

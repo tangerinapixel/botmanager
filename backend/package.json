@@ -5,7 +5,8 @@
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js",
-    "dev": "nodemon bot.js"
+    "dev": "nodemon bot.js",
+    "postinstall": "node ./wa-engine/syncVendor.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
