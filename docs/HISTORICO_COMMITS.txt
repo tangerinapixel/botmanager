@@ -1,7 +1,8 @@
 HISTÓRICO DE COMMITS DO REPOSITÓRIO (Branch: ponto-estavel)
 ============================================================
 
-* 78a8a27 - (2026-10-26) feat(updater): mecanismo de auto-update integrado ao github releases com popup modal [Roni Moreira]
+* 6204c10 - (2026-10-26) chore(release): preparar versao 2.1.9 com suporte nativo a auto-update e popup [Roni Moreira]
+* 00c9f44 - (2026-10-26) feat(updater): mecanismo de auto-update integrado ao github releases com popup modal [Roni Moreira]
 * 2b90564 - (2026-10-25) feat(wa-engine): arquitetura de soberania do wwebjs com adapters modulares e auto-diagnostico [Roni Moreira]
 * f0666f0 - (2026-10-25) fix(livechat): envio nativo de imagens como type image e preservacao de extensao no multer [Roni Moreira]
 * dab5f3a - (2026-10-25) feat(livechat): suporte a envio e renderizacao de imagens, cache inteligente e correcoes v2.1.7 [Roni Moreira]

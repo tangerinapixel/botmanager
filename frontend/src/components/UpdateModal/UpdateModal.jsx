@@ -18,7 +18,7 @@ export default function UpdateModal({
   if (!isOpen) return null;
 
   const version = updateInfo?.version || 'Nova Versão';
-  const currentVersion = updateInfo?.currentVersion || '2.1.7';
+  const currentVersion = updateInfo?.currentVersion || '2.1.9';
   const releaseNotes = updateInfo?.releaseNotes;
 
   return (

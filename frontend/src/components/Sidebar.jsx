@@ -289,7 +289,7 @@ function Sidebar({ collapsed, onToggle, activeConfigPage, setActiveConfigPage, w
         {!collapsed && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Typography sx={{ fontSize: '0.65rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-              v2.1.7
+              v2.1.9
             </Typography>
             <Tooltip title="Verificar atualizações" placement="top">
               <IconButton

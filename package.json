@@ -1,6 +1,6 @@
 {
   "name": "seu-whatsapp-bot",
-  "version": "2.1.7",
+  "version": "2.1.9",
   "description": "Bot WhatsApp com interface Electron",
   "main": "electron.js",
   "scripts": {
