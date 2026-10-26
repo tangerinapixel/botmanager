@@ -7,11 +7,11 @@ Este documento contém o registro dos checkpoints, branches e histórico de vers
 ## 1. Informações do Checkpoint Atual
 
 * **Versão:** `2.1.7`
-* **Hash do Commit:** `dab5f3a`
-* **Data do Commit:** 25 de Outubro de 2026, 21:03:03 (-03:00)
+* **Hash do Commit:** `f0666f0`
+* **Data do Commit:** 25 de Outubro de 2026, 21:55:54 (-03:00)
 * **Autor:** Roni Moreira <roni@virtualteologico.com.br>
 * **Branch Ativa:** `ponto-estavel`
-* **Mensagem:** `feat(livechat): suporte a envio e renderizacao de imagens, cache inteligente e correcoes v2.1.7`
+* **Mensagem:** `fix(livechat): envio nativo de imagens como type image e preservacao de extensao no multer`
 * **Status:** Árvore de trabalho limpa (`working tree clean`), todas as alterações consolidadas.
 
 ---
@@ -52,13 +52,21 @@ Este documento contém o registro dos checkpoints, branches e histórico de vers
    - Descoberta e isolada a causa raiz: `window.WWebJS.processMediaData` retornava um Model `MediaData` com a propriedade interna `__x_id: '1'`. Ao espalhar `...mediaOptions` no construtor da mensagem, o `MsgKey` era corrompido, fazendo os getters do WhatsApp (`getSender` / `getValidatedSender`) falharem.
    - Implementado o **Patch 4** em `wwebjsPatcher.js` expurgando `__x_id`, `parent`, `collection` e `revisionNumber` antes da criação da mensagem, viabilizando o envio de imagens com 100% de sucesso.
 
-### e) Atualização de Versão
-- Versão incrementada para `2.1.7` em `package.json`, `backend/package.json` e `preloader/loading.html`.
+### f) Envio Nativo de Imagem (`type: 'image'`) e Preservação de Extensão no Multer (`liveChatRoutes.js`, `liveChatService.js`, `wwebjsPatcher.js`)
+1. **Multer com DiskStorage e Extensões Preservadas (`liveChatRoutes.js`):**
+   - Substituição de `multer({ dest: uploadsDir })` por `multer.diskStorage` que preserva rigorosamente a extensão original (`.jpg`, `.png`, etc.) no disco, impedindo que arquivos sem extensão façam o `mime.getType` retornar `null`.
+2. **Construção Segura e Tipada de `MessageMedia` (`liveChatService.js`):**
+   - Extração do MIME type e nome de arquivo válidos com fallback estrito (`image/jpeg`, `image/png`, `image/webp`).
+   - Construção explícita via `new MessageMedia(mimetype, b64data, filename)` e envio com `sendMediaAsDocument: false` e vinculação de `options.media = media`.
+3. **Patch 4 Aprimorado e Patch 5 de Retorno Resiliente (`wwebjsPatcher.js`):**
+   - Forçamento estrito de `mediaData.type = 'image'` em `attributes` e método `set('type', 'image')`.
+   - **Patch 5:** Resiliência no retorno do `sendMessage`, recuperando a mensagem enviada a partir da coleção de mensagens do chat se `Msg.get` ainda não tiver sincronizado, garantindo o `messageId` exato no frontend e cache de disco.
 
 ---
 
 ## 3. Histórico de Checkpoints Anteriores
 
+* **`dab5f3a`** - (2026-10-25) `feat(livechat): suporte a envio e renderizacao de imagens, cache inteligente e correcoes v2.1.7`
 * **`9ab941d`** - (2026-10-25) `fix(etiquetas): consistencia estrita de contatos exportaveis e cofre ultra-leve lidPhoneStore`
 * **`f340bcd`** - (2026-10-25) `fix(livechat): blindagem de edge cases em grupos, remocao de race condition e novo loader dinamico`
 * **`21dfac9`** - (2026-10-25) `docs: registro de checkpoints e histórico do Git para consulta futura`
