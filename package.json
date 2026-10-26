@@ -28,6 +28,13 @@
     "appId": "com.virtualteologico.bot",
     "productName": "Bot Manager X",
     "copyright": "Copyright © 2026 Bot Manager X",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "tangerinapixel",
+        "repo": "botmanager"
+      }
+    ],
     "extraResources": [
       "backend/**",
       "!backend/.wwebjs_auth/**",
