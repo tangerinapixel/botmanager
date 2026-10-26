@@ -13,9 +13,15 @@ const isDev = require('electron-is-dev');
 const Store = require('electron-store');
 const axios = require('axios');
 const crypto = require('crypto');
-const fs = require('fs');
 const splashManager = require('./preloader/splashManager');
-const updateManager = require('./updater/updateManager');
+
+let updateManager = null;
+try {
+  const updateManagerPath = path.join(__dirname, 'updater', 'updateManager');
+  updateManager = require(updateManagerPath);
+} catch (err) {
+  console.warn('[Electron] Módulo updateManager não carregado ou ausente:', err.message);
+}
 
 // Variáveis globais
 const store = new Store();
@@ -207,7 +213,7 @@ function createWindow() {
       splashManager.transitionToMain(mainWindow, () => {
         mainWindow.webContents.send('initial-activation-status', isActivated);
         try {
-          updateManager.init(mainWindow);
+          updateManager?.init(mainWindow);
         } catch (updateErr) {
           console.warn('[Electron Main] Aviso ao iniciar UpdateManager:', updateErr.message);
         }
