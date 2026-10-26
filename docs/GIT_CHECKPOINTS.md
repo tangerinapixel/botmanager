@@ -7,12 +7,12 @@ Este documento contém o registro dos checkpoints, branches e histórico de vers
 ## 1. Informações do Checkpoint Atual
 
 * **Versão:** `2.2.0`
-* **Hash do Commit:** `7425293`
-* **Data do Checkpoint:** 26 de Outubro de 2026, 01:35:00 (-03:00)
+* **Hash do Commit:** `88c0315`
+* **Data do Checkpoint:** 26 de Outubro de 2026, 01:40:00 (-03:00)
 * **Autor:** Roni Moreira <roni@virtualteologico.com.br>
 * **Branch Ativa:** `ponto-estavel`
-* **Mensagem:** `chore(release): lancamento da versao 2.2.0 para validacao do fluxo de auto-update`
-* **Status:** Pacote v2.2.0 compilado e pronto para empacotamento com electron-builder.
+* **Mensagem:** `ci(actions): esteira de build e publicacao automatica de releases na nuvem`
+* **Status:** GitHub Actions workflow (.github/workflows/release.yml) configurado para build e release na nuvem.
 
 ---
 

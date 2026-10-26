@@ -1,7 +1,8 @@
 HISTÓRICO DE COMMITS DO REPOSITÓRIO (Branch: ponto-estavel)
 ============================================================
 
-* 7425293 - (2026-10-26) chore(release): lancamento da versao 2.2.0 para validacao do fluxo de auto-update [Roni Moreira]
+* 88c0315 - (2026-10-26) ci(actions): esteira de build e publicacao automatica de releases na nuvem [Roni Moreira]
+* 9a10199 - (2026-10-26) chore(release): lancamento da versao 2.2.0 para validacao do fluxo de auto-update [Roni Moreira]
 * bb72f93 - (2026-10-26) fix(build): incluir pasta updater na whitelist do asar e blindar carregamento no electron [Roni Moreira]
 * 00c9f44 - (2026-10-26) feat(updater): mecanismo de auto-update integrado ao github releases com popup modal [Roni Moreira]
 * 2b90564 - (2026-10-25) feat(wa-engine): arquitetura de soberania do wwebjs com adapters modulares e auto-diagnostico [Roni Moreira]
