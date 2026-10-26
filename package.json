@@ -10,7 +10,8 @@
     "electron:dev": "electron.cmd .",
     "build:frontend": "npm run build --prefix frontend",
     "electron:package": "npm run build:frontend && electron-builder",
-    "dist": "npm run build:frontend && electron-builder --win"
+    "dist": "npm run build:frontend && electron-builder --win",
+    "release:publish": "node ./scripts/publishRelease.js"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
