@@ -7,16 +7,35 @@ Este documento contém o registro dos checkpoints, branches e histórico de vers
 ## 1. Informações do Checkpoint Atual
 
 * **Versão:** `2.1.7`
-* **Hash do Commit:** `538f03b`
-* **Data do Checkpoint:** 25 de Outubro de 2026, 23:15:00 (-03:00)
+* **Hash do Commit:** `78a8a27`
+* **Data do Checkpoint:** 26 de Outubro de 2026, 00:40:00 (-03:00)
 * **Autor:** Roni Moreira <roni@virtualteologico.com.br>
 * **Branch Ativa:** `ponto-estavel`
-* **Mensagem:** `feat(wa-engine): arquitetura de soberania do wwebjs com adapters modulares e auto-diagnostico`
-* **Status:** Validação empírica concluída com 100% de sucesso (12 contratos Meta OK).
+* **Mensagem:** `feat(updater): mecanismo de auto-update integrado ao github releases com popup modal`
+* **Status:** Motor electron-updater, canais de IPC e modal visual (Glassmorphism Dark) concluídos.
 
 ---
 
-## 2. Resumo das Alterações Consolidadas neste Checkpoint (Motor Soberano WAEngine)
+## 2. Resumo das Alterações Consolidadas neste Checkpoint (Auto-Update com Popup Modal)
+
+### a) Motor Central no Processo Electron (`updater/updateManager.js` e `updater/updateLogger.js`)
+- Configuração do `electron-updater` apontando para o repositório GitHub `tangerinapixel/botmanager`.
+- Controle de download não-intrusivo (`autoDownload = false`), permitindo consentimento prévio do cliente.
+- Transmissão em tempo real de eventos: `checking`, `update-available`, `download-progress` (com %, velocidade e bytes transferidos), `update-downloaded` e `error`.
+- Suporte a instalação atômica via `quitAndInstall()` e simulação de teste via `updater:simulate-update`.
+
+### b) Camada de Segurança e ContextBridge (`preload.js`)
+- Exposição estrita de canais no `contextBridge.electronAPI.updater`.
+- Handlers assíncronos: `checkForUpdates()`, `startDownload()`, `quitAndInstall()`, `getCurrentVersion()` e listeners de eventos.
+
+### c) Interface Visual do Modal (`frontend/src/components/UpdateModal/`)
+- `UpdateModal.jsx` e `UpdateModal.css`: Modal flutuante elegante com tema Dark, Glassmorphism e micro-animações.
+- Suporte a 4 estados dinâmicos:
+  1. *Nova Versão Disponível* (com versão atual, nova versão, changelog formatado e botões de ação).
+  2. *Baixando Atualização* (barra de progresso com shimmer, velocidade e opção de continuar em segundo plano).
+  3. *Pronto para Instalar* (mensagem amigável e botão de reiniciar e aplicar a atualização).
+  4. *Falha de Conexão* (aviso amigável e opção de tentar novamente).
+- `Sidebar.jsx`: Atalho visual com ícone de sincronização e número de versão no rodapé.
 
 ### a) Vendor Soberano do WhatsApp-Web.js (`backend/vendor/wwebjs`)
 - Código-fonte essencial de `whatsapp-web.js` (463.93 KB) 100% versionado no Git sem subpastas `node_modules` nem arquivos compilados.

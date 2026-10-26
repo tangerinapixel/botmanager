@@ -15,6 +15,7 @@ const axios = require('axios');
 const crypto = require('crypto');
 const fs = require('fs');
 const splashManager = require('./preloader/splashManager');
+const updateManager = require('./updater/updateManager');
 
 // Variáveis globais
 const store = new Store();
@@ -205,6 +206,11 @@ function createWindow() {
       console.log('[Electron Main] Aplicação principal carregada. Executando transição atômica...');
       splashManager.transitionToMain(mainWindow, () => {
         mainWindow.webContents.send('initial-activation-status', isActivated);
+        try {
+          updateManager.init(mainWindow);
+        } catch (updateErr) {
+          console.warn('[Electron Main] Aviso ao iniciar UpdateManager:', updateErr.message);
+        }
       });
     }
   });

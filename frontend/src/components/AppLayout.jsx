@@ -20,10 +20,13 @@ import IAContentManager from './IAContentManager/IAContentManager';
 import ConfirmDialog from './ConfirmDialog';
 import IAPromptConfig from './IAPromptConfig/IAPromptConfig';
 import LiveChatHub from './LiveChat/LiveChatHub';
+import UpdateModal from './UpdateModal/UpdateModal';
+import { useAutoUpdater } from './UpdateModal/useAutoUpdater';
 
 const electronAPI = window.electronAPI;
 
 export function AppLayout({ appState }) {
+  const autoUpdater = useAutoUpdater();
   const {
     waClientStatus, handleWhatsAppAction,
     isLoadingActivation, loadingMessage, isFadingOut, showActivationModal,
@@ -677,6 +680,18 @@ export function AppLayout({ appState }) {
       )}
       <ExportarEtiquetasModal open={openExportModal} onClose={() => setOpenExportModal(false)} />
       <ExportarGruposModal open={openExportGroupsModal} onClose={() => setOpenExportGroupsModal(false)} />
+
+      {/* ── MODAL DE ATUALIZAÇÃO AUTOMÁTICA (AUTO-UPDATE) ── */}
+      <UpdateModal
+        isOpen={autoUpdater.isOpen}
+        step={autoUpdater.step}
+        updateInfo={autoUpdater.updateInfo}
+        progress={autoUpdater.progress}
+        errorMessage={autoUpdater.errorMessage}
+        onStartDownload={autoUpdater.startDownload}
+        onQuitAndInstall={autoUpdater.quitAndInstall}
+        onClose={autoUpdater.closeModal}
+      />
 
       {/* ── LOG DRAWER (Gaveta de Observabilidade) ── */}
       {isLogDrawerOpen && (

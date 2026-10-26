@@ -12,7 +12,12 @@ const validSendChannels = [
   'restart-backend',
   'window:minimize',
   'window:maximize',
-  'window:close'
+  'window:close',
+  // Canais de Auto-Update
+  'updater:check-for-updates',
+  'updater:start-download',
+  'updater:quit-and-install',
+  'updater:simulate-update'
 ];
 
 // Canais que o Renderer pode OUVIR mensagens do Main Process
@@ -22,7 +27,14 @@ const validReceiveChannels = [
   'backend-status',
   'backend-restart-initiated',
   'download-progress',
-  'download-complete'
+  'download-complete',
+  // Canais de Auto-Update
+  'updater:status',
+  'updater:update-available',
+  'updater:update-not-available',
+  'updater:download-progress',
+  'updater:update-downloaded',
+  'updater:error'
 ];
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -93,6 +105,45 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // --- CONTROLES DE JANELA ---
   minimizeWindow: () => ipcRenderer.send('window:minimize'),
   maximizeWindow: () => ipcRenderer.send('window:maximize'),
-  closeWindow:    () => ipcRenderer.send('window:close')
+  closeWindow:    () => ipcRenderer.send('window:close'),
   // ------------------------------------------------
+
+  // --- AUTO-UPDATE API ---
+  updater: {
+    checkForUpdates: () => ipcRenderer.invoke('updater:check-for-updates'),
+    startDownload: () => ipcRenderer.invoke('updater:start-download'),
+    quitAndInstall: () => ipcRenderer.invoke('updater:quit-and-install'),
+    getCurrentVersion: () => ipcRenderer.invoke('updater:get-current-version'),
+    simulateUpdate: () => ipcRenderer.invoke('updater:simulate-update'),
+    onStatus: (cb) => {
+      const sub = (e, data) => cb(data);
+      ipcRenderer.on('updater:status', sub);
+      return () => ipcRenderer.removeListener('updater:status', sub);
+    },
+    onUpdateAvailable: (cb) => {
+      const sub = (e, data) => cb(data);
+      ipcRenderer.on('updater:update-available', sub);
+      return () => ipcRenderer.removeListener('updater:update-available', sub);
+    },
+    onUpdateNotAvailable: (cb) => {
+      const sub = (e, data) => cb(data);
+      ipcRenderer.on('updater:update-not-available', sub);
+      return () => ipcRenderer.removeListener('updater:update-not-available', sub);
+    },
+    onDownloadProgress: (cb) => {
+      const sub = (e, data) => cb(data);
+      ipcRenderer.on('updater:download-progress', sub);
+      return () => ipcRenderer.removeListener('updater:download-progress', sub);
+    },
+    onUpdateDownloaded: (cb) => {
+      const sub = (e, data) => cb(data);
+      ipcRenderer.on('updater:update-downloaded', sub);
+      return () => ipcRenderer.removeListener('updater:update-downloaded', sub);
+    },
+    onError: (cb) => {
+      const sub = (e, data) => cb(data);
+      ipcRenderer.on('updater:error', sub);
+      return () => ipcRenderer.removeListener('updater:error', sub);
+    }
+  }
 });

@@ -17,6 +17,7 @@ import {
   faSpinner,
   faMobileScreen,
   faComments,
+  faRotate,
 } from '@fortawesome/free-solid-svg-icons';
 import PulsatingDot from './PulsatingDot';
 
@@ -286,9 +287,20 @@ function Sidebar({ collapsed, onToggle, activeConfigPage, setActiveConfigPage, w
         justifyContent: collapsed ? 'center' : 'space-between',
       }}>
         {!collapsed && (
-          <Typography sx={{ fontSize: '0.65rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-            © {new Date().getFullYear()} Bot Manager
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Typography sx={{ fontSize: '0.65rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+              v2.1.7
+            </Typography>
+            <Tooltip title="Verificar atualizações" placement="top">
+              <IconButton
+                size="small"
+                onClick={() => window.electronAPI?.updater?.checkForUpdates?.()}
+                sx={{ color: 'var(--text-muted)', p: '2px', '&:hover': { color: 'var(--accent-primary)' } }}
+              >
+                <FontAwesomeIcon icon={faRotate} style={{ fontSize: '10px' }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
         )}
         {collapsed && (
           <Tooltip title="Expandir menu" placement="right">
